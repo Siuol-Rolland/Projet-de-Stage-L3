@@ -1,0 +1,188 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated color tokens for UnivPass Bold-inspired design with teal, coral, and cream */
+  --background: #eff6ff;
+  /* White background */
+  --foreground: #252C37;
+  /* Dark gray text for readability */
+  --card: #fff5f0;
+  /* Light cream card background */
+  --card-foreground: #374151;
+  /* Medium gray card text */
+  --popover: #f5f5f0;
+  /* Cream popover background */
+  --popover-foreground: #1f2937;
+  /* Dark gray popover text */
+  --primary: #56a5fd;
+  /* Teal primary color */
+  --primary-foreground: #ffffff;
+  /* White text on primary */
+  --secondary: #ff7f50;
+  /* Coral accent color */
+  --secondary-foreground: #ffffff;
+  /* White text on secondary */
+  --muted: #f5f5f0;
+  /* Cream muted background */
+  --muted-foreground: #6b7280;
+  /* Gray muted text */
+  --accent: #008080;
+  /* Teal accent for CTAs */
+  --accent-foreground: #ffffff;
+  /* White text on accent */
+  --destructive: #dc2626;
+  /* Red for errors */
+  --destructive-foreground: #ffffff;
+  /* White text on destructive */
+  --border: #e5e7eb;
+  /* Light gray border */
+  --input: #ffffff;
+  /* White input background */
+  --ring: rgba(0, 128, 128, 0.3);
+  /* Teal focus ring */
+  --chart-1: #008080;
+  /* Teal */
+  --chart-2: #ff7f50;
+  /* Coral */
+  --chart-3: #f5f5f0;
+  /* Cream */
+  --chart-4: #6b7280;
+  /* Gray */
+  --chart-5: #1f2937;
+  /* Dark gray */
+  --radius: 0.75rem;
+  /* More rounded corners for modern look */
+  --sidebar: #f5f5f0;
+  /* Cream sidebar */
+  --sidebar-foreground: #1f2937;
+  /* Dark gray sidebar text */
+  --sidebar-primary: #008080;
+  /* Teal sidebar primary */
+  --sidebar-primary-foreground: #ffffff;
+  /* White sidebar primary text */
+  --sidebar-accent: #ff7f50;
+  /* Coral sidebar accent */
+  --sidebar-accent-foreground: #ffffff;
+  /* White sidebar accent text */
+  --sidebar-border: #e5e7eb;
+  /* Light gray sidebar border */
+  --sidebar-ring: rgba(0, 128, 128, 0.3);
+  /* Teal sidebar focus ring */
+}
+
+.dark {
+  /* Dark mode tokens maintaining the Bold-inspired theme */
+  --background: #0f172a;
+  /* Dark slate background */
+  --foreground: #f1f5f9;
+  /* Light slate text */
+  --card: #1e293b;
+  /* Dark slate card */
+  --card-foreground: #e2e8f0;
+  /* Light slate card text */
+  --popover: #1e293b;
+  /* Dark slate popover */
+  --popover-foreground: #f1f5f9;
+  /* Light slate popover text */
+  --primary: #14b8a6;
+  /* Lighter teal for dark mode */
+  --primary-foreground: #0f172a;
+  /* Dark text on primary */
+  --secondary: #fb7185;
+  /* Adjusted coral for dark mode */
+  --secondary-foreground: #0f172a;
+  /* Dark text on secondary */
+  --muted: #334155;
+  /* Dark slate muted */
+  --muted-foreground: #94a3b8;
+  /* Light slate muted text */
+  --accent: #14b8a6;
+  /* Lighter teal accent */
+  --accent-foreground: #0f172a;
+  /* Dark text on accent */
+  --destructive: #ef4444;
+  /* Lighter red for dark mode */
+  --destructive-foreground: #f1f5f9;
+  /* Light text on destructive */
+  --border: #334155;
+  /* Dark slate border */
+  --input: #1e293b;
+  /* Dark slate input background */
+  --ring: rgba(20, 184, 166, 0.3);
+  /* Teal focus ring */
+  --chart-1: #14b8a6;
+  --chart-2: #fb7185;
+  --chart-3: #334155;
+  --chart-4: #94a3b8;
+  --chart-5: #f1f5f9;
+  --sidebar: #0f172a;
+  /* Dark slate sidebar */
+  --sidebar-foreground: #f1f5f9;
+  /* Light slate sidebar text */
+  --sidebar-primary: #14b8a6;
+  /* Lighter teal sidebar primary */
+  --sidebar-primary-foreground: #0f172a;
+  /* Dark sidebar primary text */
+  --sidebar-accent: #fb7185;
+  /* Adjusted coral sidebar accent */
+  --sidebar-accent-foreground: #0f172a;
+  /* Dark sidebar accent text */
+  --sidebar-border: #334155;
+  /* Dark slate sidebar border */
+  --sidebar-ring: rgba(20, 184, 166, 0.3);
+  /* Teal sidebar focus ring */
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground overflow-x-hidden;
+  }
+}
