@@ -31,6 +31,7 @@
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setIsLoading(true);
+     router.push("/page");
 
       const formData = new FormData(e.currentTarget);
     };
