@@ -1,0 +1,105 @@
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  
+}
+
+model ADMINISTRATEUR {
+  ID_Admin     Int      @id @default(autoincrement())
+  Nom_Admin    String
+  Email_Admin  String   @unique
+  MotPass_Admin String
+
+  // Relations
+  id_Quotas   Int?
+  id_Paie     Int?
+  quotas      QUOTAS?   @relation(fields: [id_Quotas], references: [ID_Quotas])
+  paie        PAIEMENT? @relation(fields: [id_Paie], references: [ID_Paie])
+}
+
+model ETUDIANT {
+  ID_Etudiant   Int      @id @default(autoincrement())
+  FullName_Et   String
+  Email_Et      String   @unique
+  Annee_Et      String
+  Dette         Float?
+  MotPass_Et    String
+
+  id_Paie       Int?
+  id_Actes      Int?
+  paie          PAIEMENT? @relation(fields: [id_Paie], references: [ID_Paie])
+  actes         ACTES?    @relation(fields: [id_Actes], references: [ID_Actes])
+  departements  DEPARTEMENT[]
+}
+
+model PROFESSEURS {
+  ID_Prof      Int     @id @default(autoincrement())
+  Nom_Prof     String
+  Email_Prof   String  @unique
+  MotPass_Prof String
+
+  id_SActes    Int?
+  sous_actes   SOUS_ACTES? @relation(fields: [id_SActes], references: [ID_SActes])
+}
+
+model DEPARTEMENT {
+  ID_Dep     Int     @id @default(autoincrement())
+  Nom_Dep    String
+
+  id_Et      Int?
+  id_Actes   Int?
+
+  etudiant   ETUDIANT? @relation(fields: [id_Et], references: [ID_Etudiant])
+  actes      ACTES?    @relation(fields: [id_Actes], references: [ID_Actes])
+}
+
+model ACTES {
+  ID_Actes   Int     @id @default(autoincrement())
+  Desc_Actes String
+
+  id_SActes  Int?
+  sous_actes SOUS_ACTES? @relation(fields: [id_SActes], references: [ID_SActes])
+
+  etudiants  ETUDIANT[]
+  departements DEPARTEMENT[]
+}
+
+model SOUS_ACTES {
+  ID_SActes     Int     @id @default(autoincrement())
+  Desc_SActes   String
+  Prix          Float
+  Note          Float?
+  Date_Realise  DateTime?
+  Statut_Valide Boolean
+
+  actes        ACTES[]
+  professeurs  PROFESSEURS[]
+}
+
+model QUOTAS {
+  ID_Quotas  Int     @id @default(autoincrement())
+  Annee      String
+  Nombre     Int
+  Date_Debut DateTime
+  Date_Fin   DateTime
+
+  admin ADMINISTRATEUR[]
+}
+
+model PAIEMENT {
+  ID_Paie     Int     @id @default(autoincrement())
+  Montant     Float
+  Type_Paie   String
+  Date_Paie   DateTime
+  Statut_Paie String
+
+  admin   ADMINISTRATEUR[]
+  etudiant ETUDIANT[]
+}
