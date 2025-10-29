@@ -1,14 +1,5 @@
-// "use server";
-// import { NextResponse } from "next/server";
-// import { PrismaClient } from "@/generated/prisma";
-
-// const prisma = new PrismaClient();
-
-// export async function InserDep(request: Request) {
-   
-// }
-
 "use server";
+
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma";
 
@@ -43,5 +34,18 @@ export async function POST(request: Request) {
       { error: "Une erreur est survenue lors de l’ajout du département" },
       { status: 500 }
     );
+  }
+}
+
+
+// 📄 GET : Récupérer tous les départements
+export async function GET() {
+  try {
+    const deps = await prisma.dEPARTEMENT.findMany({
+      orderBy: { ID_Dep: "asc" },
+    });
+    return NextResponse.json(deps);
+  } catch (error) {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

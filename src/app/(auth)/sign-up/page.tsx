@@ -9,10 +9,11 @@ import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent } from "@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import Swal from "sweetalert2";
 
 import { User, FileText } from "lucide-react";
+import { toast } from "react-toastify";
 
 type FormDataType = {
   nomComplet: string;
@@ -58,6 +59,16 @@ export default function SignUpPage({
   const [formData, setFormData] = useState<FormDataType>(initialFormData);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [departements, setDepartements] = useState<any[]>([]);
+  const [selectedDep, setSelectedDep] = useState("");
+
+  // 🔄 Récupérer les départements depuis l'API au montage du composant
+  useEffect(() => {
+    fetch("/api/department")
+      .then((res) => res.json())
+      .then((data) => setDepartements(data))
+      .catch((err) => toast.error("Erreur lors du chargement des départements"));
+  }, []);
 
   // 🔹 Met à jour les champs
   const handleInputChange = (field: keyof FormDataType, value: string) => {
@@ -154,35 +165,16 @@ export default function SignUpPage({
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Département</Label>
-              <Select
-                value={formData.departement}
-                onValueChange={(v: string) =>
-                  handleInputChange("departement", v)
-                }
-              >
+              <Select onValueChange={setSelectedDep}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Sélectionnez le département" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Chirurgie dentaire">
-                    Chirurgie dentaire
-                  </SelectItem>
-                  <SelectItem value="Orthopédie dento-faciale">
-                    Orthopédie dento-faciale
-                  </SelectItem>
-                  <SelectItem value="Endodontie">Endodontie</SelectItem>
-                  <SelectItem value="Pédodontie">Pédodontie</SelectItem>
-                  <SelectItem value="Prothèse adjointe">
-                    Prothèse adjointe
-                  </SelectItem>
-                  <SelectItem value="Prothèse conjointe">
-                    Prothèse conjointe
-                  </SelectItem>
-                  <SelectItem value="Parodontologie">Parodontologie</SelectItem>
-                  <SelectItem value="Dentisterie conservatrice">
-                    Dentisterie conservatrice
-                  </SelectItem>
-                  <SelectItem value="Radiologie">Radiologie</SelectItem>
+                  {departements.map((dep) => (
+                    <SelectItem key={dep.ID_Dep} value={dep.Nom_Dep}>
+                      {dep.Nom_Dep}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

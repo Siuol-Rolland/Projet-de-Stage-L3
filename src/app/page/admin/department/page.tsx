@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CirclePlus } from "lucide-react";
@@ -18,6 +18,23 @@ import { Label } from "@/components/ui/label";
 export default function DepartmentPage() {
   const [open, setOpen] = useState(false);
   const [nomDep, setNomDep] = useState("");
+  const [departements, setDepartements] = useState<any[]>([]); // 🔹 liste des départements
+
+  // ✅ Charger les départements au montage du composant
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  // 🔹 Fonction pour récupérer les départements
+  const fetchDepartments = async () => {
+    try {
+      const res = await fetch("/api/department");
+      const data = await res.json();
+      setDepartements(data);
+    } catch (error) {
+      console.error("Erreur de chargement :", error);
+    }
+  };
 
   // 🔹 Fonction d'insertion avec SweetAlert2
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,6 +67,7 @@ export default function DepartmentPage() {
         });
         setNomDep("");
         setOpen(false);
+        fetchDepartments(); // 🔄 recharger la liste après insertion
       } else {
         const error = await res.json();
         Swal.fire({
@@ -71,9 +89,10 @@ export default function DepartmentPage() {
     <div className="space-x-2 p-4">
       <h1 className="text-lg font-bold mb-4">Départements</h1>
 
+      {/* 🔘 Bouton + Modal d'ajout */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button className="text-white flex items-center gap-2">
+          <Button className="text-white flex items-center gap-2 mb-4">
             Ajouter
             <CirclePlus />
           </Button>
@@ -104,6 +123,30 @@ export default function DepartmentPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 🧾 Liste des départements */}
+      <div className="mt-6">
+        {departements.length === 0 ? (
+          <p className="text-gray-500 italic">Aucun département ajouté pour le moment.</p>
+        ) : (
+          <table className="min-w-full border border-gray-300 rounded-lg text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 border">#</th>
+                <th className="px-4 py-2 border">Nom du département</th>
+              </tr>
+            </thead>
+            <tbody>
+              {departements.map((dep, index) => (
+                <tr key={dep.ID_Dep} className="hover:bg-gray-50">
+                  <td className="px-4 py-2 border text-center">{index + 1}</td>
+                  <td className="px-4 py-2 border">{dep.Nom_Dep}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
