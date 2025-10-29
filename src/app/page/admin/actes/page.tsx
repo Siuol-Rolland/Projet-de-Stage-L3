@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CirclePlus, Plus, Trash2 } from "lucide-react";
@@ -24,29 +24,76 @@ import {
 
 export default function ActesPage() {
   const [open, setOpen] = useState(false);
-  const [sousActes, setSousActes] = useState([""]); // un seul champ au départ
+  const [departements, setDepartements] = useState<any[]>([]);
+  const [selectedDep, setSelectedDep] = useState("");
+  const [descActe, setDescActe] = useState("");
+  const [sousActes, setSousActes] = useState([""]);
 
-  // ➕ ajouter un nouveau champ de sous-acte
+  // 🔹 Charger les départements depuis Supabase via Prisma
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const res = await fetch("/api/department", { method: "GET" });
+      const data = await res.json();
+      setDepartements(data);
+    };
+    fetchDepartments();
+  }, []);
+
+  // ➕ Ajouter un sous-acte
   const addSousActe = () => {
     setSousActes([...sousActes, ""]);
   };
 
-  // 🗑️ supprimer un champ spécifique
+  // 🗑️ Supprimer un sous-acte
   const removeSousActe = (index: number) => {
     const newSousActes = sousActes.filter((_, i) => i !== index);
     setSousActes(newSousActes);
   };
 
-  // 🖊️ modifier la valeur d’un sous-acte
+  // 🖊️ Modifier un sous-acte
   const handleSousActeChange = (index: number, value: string) => {
     const newSousActes = [...sousActes];
     newSousActes[index] = value;
     setSousActes(newSousActes);
   };
 
+  // ✅ Envoi vers l’API
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedDep || !descActe.trim()) {
+      toast.error("Veuillez remplir tous les champs !");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/actes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_Dep: Number(selectedDep),
+          Desc_Actes: descActe,
+          sous_actes: sousActes.filter((sa) => sa.trim() !== ""),
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Acte ajouté avec succès !");
+        setOpen(false);
+        setDescActe("");
+        setSousActes([""]);
+      } else {
+        toast.error("Erreur lors de l’ajout de l’acte !");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur serveur !");
+    }
+  };
+
   return (
     <div className="space-x-2 p-4">
-      <h1 className="text-lg font-bold mb-4">ActesPage</h1>
+      <h1 className="text-lg font-bold mb-4">Gestion des Actes</h1>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
@@ -58,27 +105,23 @@ export default function ActesPage() {
 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter un actes</DialogTitle>
+            <DialogTitle>Ajouter un acte</DialogTitle>
           </DialogHeader>
 
-          <form className="space-y-4 mt-4">
+          <form className="space-y-4 mt-4" onSubmit={handleSubmit}>
             {/* Département */}
             <div className="grid gap-3">
               <Label>Département</Label>
-              <Select>
+              <Select onValueChange={(val) => setSelectedDep(val)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Sélectionnez le département" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Chirurgie dentaire">Chirurgie dentaire</SelectItem>
-                  <SelectItem value="Orthopédie dento-faciale">Orthopédie dento-faciale</SelectItem>
-                  <SelectItem value="Endodontie">Endodontie</SelectItem>
-                  <SelectItem value="Pédodontie">Pédodontie</SelectItem>
-                  <SelectItem value="Prothèse adjointe">Prothèse adjointe</SelectItem>
-                  <SelectItem value="Prothèse conjointe">Prothèse conjointe</SelectItem>
-                  <SelectItem value="Parodontologie">Parodontologie</SelectItem>
-                  <SelectItem value="Dentisterie conservatrice">Dentisterie conservatrice</SelectItem>
-                  <SelectItem value="Radiologie">Radiologie</SelectItem>
+                  {departements.map((dep) => (
+                    <SelectItem key={dep.ID_Dep} value={dep.ID_Dep.toString()}>
+                      {dep.Nom_Dep}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -86,13 +129,17 @@ export default function ActesPage() {
             {/* Désignation de l'acte */}
             <div className="grid gap-3">
               <Label className="text-sm font-medium">Désignation de l'acte</Label>
-              <Input type="text" placeholder="Ex: ..." />
+              <Input
+                type="text"
+                value={descActe}
+                onChange={(e) => setDescActe(e.target.value)}
+                placeholder="Ex: Détartrage complet"
+              />
             </div>
 
             {/* Sous-actes dynamiques */}
             <div className="grid gap-3">
               <Label className="text-sm font-medium">Sous-Actes</Label>
-
               {sousActes.map((val, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input
