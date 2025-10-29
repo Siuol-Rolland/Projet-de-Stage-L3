@@ -20,6 +20,7 @@ type FormDataType = {
   phone: string;
   departement: string;
   annee: string;
+  photo: string;
   password: string;
   confPassword: string;
 };
@@ -30,6 +31,7 @@ const initialFormData: FormDataType = {
   phone: "",
   departement: "",
   annee: "",
+  photo: "",
   password: "",
   confPassword: "",
 };
@@ -37,13 +39,15 @@ const initialFormData: FormDataType = {
 const steps = [
   { number: 1, title: "Informations personnelles", icon: User },
   { number: 2, title: "Informations académiques", icon: FileText },
-  { number: 3, title: "Mot de passe", icon: FileText },
+  { number: 3, title: "Photo d'identité", icon: FileText},
+  { number: 4, title: "Mot de passe", icon: FileText },
 ];
 
 const fieldsPerStep: { [key: number]: (keyof FormDataType)[] } = {
   1: ["nomComplet", "email", "phone"],
   2: ["departement", "annee"],
-  3: ["password", "confPassword"],
+  3: ["photo"],
+  4: ["password", "confPassword"],
 };
 
 export default function SignUpPage({
@@ -74,7 +78,7 @@ export default function SignUpPage({
   };
 
   // 🔹 Validation de tout le formulaire
-  const validateAllSteps = () => [1, 2, 3].every((s) => validateStep(s));
+  const validateAllSteps = () => [1, 2, 3, 4].every((s) => validateStep(s));
 
   // 🔹 Étape suivante
   const handleNextStep = () => {
@@ -183,15 +187,44 @@ export default function SignUpPage({
               </Select>
             </div>
 
-            <InputField
-              label="Année"
-              value={formData.annee}
-              onChange={(v) => handleInputChange("annee", v)}
-            />
+            <div className="space-y-2">
+              <Label>Année d'étude</Label>
+              <Select 
+                value={formData.annee}
+                onValueChange={(v: string) => 
+                  handleInputChange("annee", v)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder= "Sélectionnez votre année d'étude"/>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="4ᵉ année">
+                    4ᵉ année
+                  </SelectItem>
+                  <SelectItem value="5ᵉ année">
+                    5ᵉ année
+                  </SelectItem>
+                  <SelectItem value="6ᵉ année">
+                    6ᵉ année
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
-
       case 3:
+        return (
+          <div className="space-y-4">
+            <InputField
+              label="Photo d'identité"
+              type="file"
+              value={formData.photo}
+              onChange={(v) => handleInputChange ("photo", v)}
+            />
+          </div>
+        );  
+      case 4:
         return (
           <div className="space-y-4">
             <InputField
