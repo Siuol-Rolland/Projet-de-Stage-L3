@@ -25,6 +25,7 @@ model ETUDIANT {
   ID_Etudiant Int    @id @default(autoincrement())
   FullName_Et String
   Email_Et    String @unique
+  Photo_Et    String?
   Annee_Et    String
   Dette       Float?
   MotPass_Et  String
@@ -46,6 +47,8 @@ model DEPARTEMENT {
   etudiants ETUDIANT[]
   // Un département peut avoir plusieurs actes
   actes     ACTES[]
+  // Un département peut avoir plusieurs quotas
+  quotas    QUOTAS[]
 }
 
 model ACTES {
@@ -95,6 +98,9 @@ model QUOTAS {
   Nombre     Int
   Date_Debut DateTime
   Date_Fin   DateTime
+
+  id_Dep Int
+  departement DEPARTEMENT @relation(fields: [id_Dep], references: [ID_Dep])
 
   admin ADMINISTRATEUR[]
 }
