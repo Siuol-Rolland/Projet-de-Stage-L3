@@ -12,19 +12,20 @@ export async function POST(request: Request) {
 
     // ✅ Crée un acte
     const acte = await prisma.aCTES.create({
-      data: {
-        Desc_Actes,
-        id_Dep,
-        sous_actes: {
-          create: sous_actes.map((sa: string) => ({
-            Desc_SActes: sa,
-            Prix: 0,
-            Statut_Valide: false,
-          })),
-        },
-      },
-      include: { sous_actes: true },
-    });
+  data: {
+    Desc_Actes,
+    id_Dep,
+    sous_actes: {
+      create: sous_actes.map((sa: any) => ({
+        Desc_SActes: sa.Desc_SActes,
+        Prix: sa.Prix,
+        Statut_Valide: false,
+      })),
+    },
+  },
+  include: { sous_actes: true },
+});
+
 
     return NextResponse.json(acte, { status: 201 });
   } catch (error) {

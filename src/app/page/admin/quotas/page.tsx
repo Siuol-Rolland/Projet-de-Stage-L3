@@ -1,331 +1,3 @@
-// "use client";
-
-// import React, { useEffect, useState } from "react";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { CirclePlus } from "lucide-react";
-// import Swal from "sweetalert2"; // ✅ Import SweetAlert2
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger,
-// } from "@/components/ui/dialog";
-// import { Label } from "@/components/ui/label";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-// import { set } from "zod";
-
-// type FormDataType = {
-//   annee: string;
-//   departement: string;
-//   acte: string;
-//   sousActe: string;
-//   nombre: number | "";
-//   dateDebut: string;
-//   dateFin: string;
-// };
-
-// const initialFormData: FormDataType = {
-//   annee: "",
-//   departement: "",
-//   acte: "",
-//   sousActe: "",
-//   nombre: "",
-//   dateDebut: "",
-//   dateFin: "",
-// };
-
-// export default function QuotasPage() {
-//   const [open, setOpen] = useState(false);
-//   const [currentStep, setCurrentStep] = useState(1);
-//   const [formData, setFormData] = useState<FormDataType>(initialFormData);
-//   const [error, setError] = useState<string | null>(null);
-
-//   // 🔹 Liste dynamique des départements
-//     const [departements, setDepartements] = useState<{ ID_Dep: number; Nom_Dep: string }[]>([]);
-    
-//     useEffect(() => {
-//       const fetchDepartements = async () => {
-//         try {
-//           const res = await fetch("/api/department");
-//           if (!res.ok) throw new Error("Erreur lors du chargement des départements");
-//           const data = await res.json();
-//           setDepartements(data);
-//         } catch (error) {
-//           console.error("Erreur fetch departements:", error);
-//         }
-//       };
-  
-//       fetchDepartements();
-//     }, []);
-
-//   // 🔹 Mettre à jour un champ
-//   const handleInputChange = (field: keyof FormDataType, value: any) => {
-//     setFormData((prev) => ({ ...prev, [field]: value }));
-//   };
-
-//   // 🔹 Validation par étape
-//   const validateStep = (step: number) => {
-//     switch (step) {
-//       case 1:
-//         return formData.annee !== "";
-//       case 2:
-//         return formData.departement !== "";
-//       case 3:
-//         return formData.acte !== "";
-//       case 4:
-//         return formData.sousActe !== "" && formData.nombre !== "";
-//       case 5:
-//         if (!formData.dateDebut || !formData.dateFin) return false;
-//         const debut = new Date(formData.dateDebut);
-//         const fin = new Date(formData.dateFin);
-//         return fin >= debut;
-//       default:
-//         return false;
-//     }
-//   };
-
-//   // 🔹 Étape suivante
-//   const handleNextStep = () => {
-//     setError(null);
-//     if (validateStep(currentStep)) {
-//       setCurrentStep((s) => Math.min(s + 1, 5));
-//     } else {
-//       setError("Veuillez remplir correctement tous les champs requis.");
-//     }
-//   };
-
-//   // 🔹 Étape précédente
-//   const handlePrevStep = () => {
-//     setError(null);
-//     setCurrentStep((s) => Math.max(s - 1, 1));
-//   };
-
-//   // 🔹 Soumission finale avec SweetAlert2
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     if (!formData.dateDebut || !formData.dateFin) {
-//       setError("Veuillez remplir les deux dates.");
-//       return;
-//     }
-
-//     const debut = new Date(formData.dateDebut);
-//     const fin = new Date(formData.dateFin);
-
-//     if (fin.getTime() === debut.getTime()) {
-//       setError("La date de fin ne peut pas être identique à la date de début.");
-//       return;
-//     }
-
-//     if (fin < debut) {
-//       setError("La date de fin ne peut pas être inférieure à la date de début.");
-//       return;
-//     }
-
-//     // ✅ Simulation de la soumission réussie
-//     console.log("Formulaire soumis :", formData);
-
-//     Swal.fire({
-//       title: "Succès 🎉",
-//       text: "Le quota a été enregistré avec succès !",
-//       icon: "success",
-//       confirmButtonText: "OK",
-//       confirmButtonColor: "#2563eb",
-//     });
-
-//     // Réinitialiser le formulaire
-//     setOpen(false);
-//     setFormData(initialFormData);
-//     setCurrentStep(1);
-//     setError(null);
-//   };
-
-//   // 🔹 Contenu des étapes
-//   const renderStepContent = () => {
-//     switch (currentStep) {
-//       case 1:
-//         return (
-//           <div className="grid gap-3">
-//             <Label>Année d'étude</Label>
-//             <Select
-//               value={formData.annee}
-//               onValueChange={(v) => handleInputChange("annee", v)}
-//             >
-//               <SelectTrigger className="w-full">
-//                 <SelectValue placeholder="Sélectionnez votre année d'étude" />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 <SelectItem value="4ᵉ année">4ᵉ année</SelectItem>
-//                 <SelectItem value="5ᵉ année">5ᵉ année</SelectItem>
-//                 <SelectItem value="6ᵉ année">6ᵉ année</SelectItem>
-//               </SelectContent>
-//             </Select>
-//           </div>
-//         );
-//       case 2:
-//         return (
-//           <div className="grid gap-3">
-//             <Label>Département</Label>
-//             <Select
-//               value={formData.departement}
-//               onValueChange={(v) => handleInputChange("departement", v)}
-//             >
-//               <SelectTrigger className="w-full">
-//                 <SelectValue placeholder="Sélectionnez le département" />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 {departements.length > 0 ? (
-//                     departements.map((dep) => (
-//                       <SelectItem key={dep.ID_Dep} value={dep.Nom_Dep}>
-//                         {dep.Nom_Dep}
-//                       </SelectItem>
-//                     ))
-//                   ) : (
-//                     <SelectItem value="" disabled>
-//                       Aucun département disponible
-//                     </SelectItem>
-//                   )}
-//               </SelectContent>
-//             </Select>
-//           </div>
-//         );
-//       case 3:
-//         return (
-//           <div className="grid gap-3">
-//             <Label>Acte</Label>
-//             <Select
-//               value={formData.acte}
-//               onValueChange={(v) => handleInputChange("acte", v)}
-//             >
-//               <SelectTrigger className="w-full">
-//                 <SelectValue placeholder="Sélectionnez une acte" />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 <SelectItem value="exemple acte 1">exemple acte 1</SelectItem>
-//                 <SelectItem value="exemple acte 2">exemple acte 2</SelectItem>
-//                 <SelectItem value="exemple acte 3">exemple acte 3</SelectItem>
-//               </SelectContent>
-//             </Select>
-//           </div>
-//         );
-//       case 4:
-//         return (
-//           <>
-//             <div className="grid gap-3">
-//               <Label>Sous-acte cible</Label>
-//               <Select
-//               value={formData.sousActe}
-//               onValueChange={(v) => handleInputChange("sousActe", v)}
-//             >
-//               <SelectTrigger className="w-full">
-//                   <SelectValue placeholder="Sélectionnez une sous-acte" />
-//                 </SelectTrigger>
-//                 <SelectContent>
-//                   <SelectItem value="exemple sous-acte 1">exemple sous-acte 1</SelectItem>
-//                   <SelectItem value="exemple sous-acte 2">exemple sous-acte 2</SelectItem>
-//                   <SelectItem value="exemple sous-acte 3">exemple sous-acte 3</SelectItem>
-//                 </SelectContent>
-//               </Select>
-//             </div>
-//             <div className="grid gap-3">
-//               <Label>Nombre</Label>
-//               <Input
-//                 type="number"
-//                 placeholder="Nombre du quota"
-//                 value={formData.nombre}
-//                 onChange={(e) =>
-//                   handleInputChange("nombre", Number(e.target.value))
-//                 }
-//               />
-//             </div>
-//           </>
-//         );
-//       case 5:
-//         return (
-//           <>
-//             <div className="grid gap-3">
-//               <Label>Date début</Label>
-//               <Input
-//                 type="date"
-//                 value={formData.dateDebut}
-//                 onChange={(e) =>
-//                   handleInputChange("dateDebut", e.target.value)
-//                 }
-//               />
-//             </div>
-//             <div className="grid gap-3">
-//               <Label>Date fin</Label>
-//               <Input
-//                 type="date"
-//                 value={formData.dateFin}
-//                 onChange={(e) =>
-//                   handleInputChange("dateFin", e.target.value)
-//                 }
-//               />
-//             </div>
-//           </>
-//         );
-//       default:
-//         return null;
-//     }
-//   };
-
-//   return (
-//     <div className="space-x-2 p-4">
-//       <h1 className="text-lg font-bold mb-4">QuotasPage</h1>
-
-//       <Dialog open={open} onOpenChange={setOpen}>
-//         <DialogTrigger asChild>
-//           <Button className="text-white flex items-center gap-2">
-//             Ajouter
-//             <CirclePlus />
-//           </Button>
-//         </DialogTrigger>
-
-//         <DialogContent className="sm:max-w-md">
-//           <DialogHeader>
-//             <DialogTitle className="justify-center">
-//               Ajouter un quota
-//             </DialogTitle>
-//           </DialogHeader>
-
-//           <form className="space-y-4 mt-4" onSubmit={handleSubmit}>
-//             {renderStepContent()}
-
-//             {error && <div className="text-red-600 text-sm">{error}</div>}
-
-//             <div className="flex justify-between mt-4">
-//               <Button
-//                 type="button"
-//                 variant="outline"
-//                 onClick={handlePrevStep}
-//                 disabled={currentStep === 1}
-//               >
-//                 Précédent
-//               </Button>
-//               {currentStep < 5 ? (
-//                 <Button type="button" onClick={handleNextStep}>
-//                   Suivant
-//                 </Button>
-//               ) : (
-//                 <Button type="submit">Enregistrer</Button>
-//               )}
-//             </div>
-//           </form>
-//         </DialogContent>
-//       </Dialog>
-//     </div>
-//   );
-// }
-
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -463,7 +135,44 @@ export default function QuotasPage() {
   };
 
   // 🔹 Soumission finale
-  const handleSubmit = (e: React.FormEvent) => {
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!formData.dateDebut || !formData.dateFin) {
+  //     setError("Veuillez remplir les deux dates.");
+  //     return;
+  //   }
+
+  //   const debut = new Date(formData.dateDebut);
+  //   const fin = new Date(formData.dateFin);
+
+  //   if (fin.getTime() === debut.getTime()) {
+  //     setError("La date de fin ne peut pas être identique à la date de début.");
+  //     return;
+  //   }
+
+  //   if (fin < debut) {
+  //     setError("La date de fin ne peut pas être inférieure à la date de début.");
+  //     return;
+  //   }
+
+  //   console.log("Formulaire soumis :", formData);
+
+  //   Swal.fire({
+  //     title: "Succès 🎉",
+  //     text: "Le quota a été enregistré avec succès !",
+  //     icon: "success",
+  //     confirmButtonText: "OK",
+  //     confirmButtonColor: "#2563eb",
+  //   });
+
+  //   setOpen(false);
+  //   setFormData(initialFormData);
+  //   setCurrentStep(1);
+  //   setError(null);
+  // };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.dateDebut || !formData.dateFin) {
@@ -484,21 +193,55 @@ export default function QuotasPage() {
       return;
     }
 
-    console.log("Formulaire soumis :", formData);
+    try {
+      const selectedDep = departements.find(d => d.Nom_Dep === formData.departement);
+      const selectedActe = actes.find(a => a.Desc_Actes === formData.acte);
+      const selectedSousActe = sousActes.find(sa => sa.Desc_SActes === formData.sousActe);
 
-    Swal.fire({
-      title: "Succès 🎉",
-      text: "Le quota a été enregistré avec succès !",
-      icon: "success",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#2563eb",
-    });
+      const response = await fetch("/api/quotas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          annee: formData.annee,
+          departementId: selectedDep?.ID_Dep,
+          acteId: selectedActe?.ID_Actes,
+          sousActeId: selectedSousActe?.ID_SActes,
+          nombre: formData.nombre,
+          dateDebut: formData.dateDebut,
+          dateFin: formData.dateFin,
+        }),
+      });
 
-    setOpen(false);
-    setFormData(initialFormData);
-    setCurrentStep(1);
-    setError(null);
+      const result = await response.json();
+
+      if (result.success) {
+        Swal.fire({
+          title: "Succès 🎉",
+          text: "Le quota a été enregistré avec succès !",
+          icon: "success",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#2563eb",
+        });
+        setOpen(false);
+        setFormData(initialFormData);
+        setCurrentStep(1);
+        setError(null);
+      } else {
+        throw new Error(result.error || "Erreur lors de l'insertion");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message);
+      Swal.fire({
+        title: "Erreur ❌",
+        text: err.message,
+        icon: "error",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
+    }
   };
+
 
   // 🔹 Contenu des étapes
   const renderStepContent = () => {

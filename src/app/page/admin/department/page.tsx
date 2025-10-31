@@ -92,8 +92,8 @@ export default function DepartmentPage() {
       {/* 🔘 Bouton + Modal d'ajout */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button className="text-white flex items-center gap-2 mb-4">
-            Ajouter
+          <Button variant="outline" className="flex items-center gap-2 mb-4">
+            Ajouter un département
             <CirclePlus />
           </Button>
         </DialogTrigger>

@@ -80,6 +80,9 @@ model SOUS_ACTES {
 
   // Un sous-acte peut être géré par plusieurs professeurs
   professeurs PROFESSEURS[]
+
+  quotas QUOTAS[] @relation("Attribuer")
+
 }
 
 model PROFESSEURS {
@@ -103,6 +106,8 @@ model QUOTAS {
   departement DEPARTEMENT @relation(fields: [id_Dep], references: [ID_Dep])
 
   admin ADMINISTRATEUR[]
+
+  sous_actes SOUS_ACTES[] @relation("Attribuer")
 }
 
 model PAIEMENT {
@@ -115,3 +120,5 @@ model PAIEMENT {
   admin    ADMINISTRATEUR[]
   etudiant ETUDIANT[]
 }
+
+
