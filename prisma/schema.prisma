@@ -11,6 +11,7 @@ datasource db {
 
 model ADMINISTRATEUR {
   ID_Admin      Int    @id @default(autoincrement())
+  user_id       String @unique  // 👈 UUID du user Supabase
   Nom_Admin     String
   Email_Admin   String @unique
   MotPass_Admin String
@@ -23,6 +24,7 @@ model ADMINISTRATEUR {
 
 model ETUDIANT {
   ID_Etudiant Int    @id @default(autoincrement())
+  user_id       String @unique  // 👈 UUID du user Supabase
   FullName_Et String
   Email_Et    String @unique
   Photo_Et    String?
@@ -87,6 +89,7 @@ model SOUS_ACTES {
 
 model PROFESSEURS {
   ID_Prof      Int    @id @default(autoincrement())
+  user_id       String @unique  // 👈 UUID du user Supabase
   Nom_Prof     String
   Email_Prof   String @unique
   MotPass_Prof String

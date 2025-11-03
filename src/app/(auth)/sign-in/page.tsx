@@ -7,6 +7,8 @@
 
 
   import { cn } from '@/lib/utils';
+  import { supabase } from '@/lib/supabase/supabaseClient';
+
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
   import { Label } from '@/components/ui/label';
@@ -28,13 +30,73 @@
     const [ isLoading, setIsLoading ] = useState(false);
     const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setIsLoading(true);
-     router.push("/page");
+    // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    //   e.preventDefault();
+    //   setIsLoading(true);
+    //  router.push("/page");
 
-      const formData = new FormData(e.currentTarget);
-    };
+    //   const formData = new FormData(e.currentTarget);
+    // };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      // 1️⃣ Connexion via Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      const user = data.user;
+      if (!user) throw new Error("Utilisateur introuvable.");
+
+      // 2️⃣ Récupération du rôle depuis ta base Prisma
+      const res = await fetch("/api/check-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+
+      const result = await res.json();
+      const role = result.role;
+
+      if (!role) {
+        throw new Error("Aucun rôle trouvé pour cet utilisateur.");
+      }
+
+      // 3️⃣ Afficher une notification
+      await Swal.fire({
+        title: "Connexion réussie 🎉",
+        text: `Bienvenue ${role === "admin" ? "Administrateur" : role === "teacher" ? "Professeur" : "Étudiant"} !`,
+        icon: "success",
+        confirmButtonText: "Continuer",
+        customClass: {
+          confirmButton:
+            "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md",
+        },
+        buttonsStyling: false,
+      });
+
+      
+
+      // 4️⃣ Redirection selon le rôle
+      if (role === "admin") router.push("/page/admin");
+      else if (role === "teacher") router.push("/page/teacher");
+      else router.push("/page/students");
+    } catch (err: any) {
+      console.error("Erreur connexion:", err);
+      Swal.fire("Erreur", err.message, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
     const handleGoogleSignIn =  async () => {
       setIsLoading(true);

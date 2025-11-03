@@ -341,6 +341,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -446,37 +447,175 @@ export default function SignUpPage({
   };
 
   // 🔹 Soumission finale
+  // const handleSubmitForm = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!validateAllSteps()) {
+  //     setError("Veuillez remplir correctement tous les champs.");
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     await Swal.fire({
+  //       title: "Compte créé avec succès",
+  //       text: `${formData.nomComplet}, votre compte a été créé.`,
+  //       icon: "success",
+  //       confirmButtonText: "OK",
+  //       customClass: {
+  //         confirmButton:
+  //           "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md",
+  //       },
+  //       buttonsStyling: false,
+  //     });
+
+  //     // TODO : intégrer votre API ici
+  //     console.log("Formulaire soumis :", formData);
+  //     router.push("/");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+//   const handleSubmitForm = async (e: React.FormEvent) => {
+//   e.preventDefault();
+
+//   if (!validateAllSteps()) {
+//     setError("Veuillez remplir correctement tous les champs.");
+//     return;
+//   }
+
+//   setIsLoading(true);
+//   setError(null);
+
+//   try {
+//     // 🔹 Étape 1 : créer un compte utilisateur dans Supabase
+//     const { data, error: signUpError } = await supabase.auth.signUp({
+//       email: formData.email,
+//       password: formData.password,
+//     });
+
+//     if (signUpError) throw signUpError;
+
+//     const user = data.user;
+//     if (!user) throw new Error("Utilisateur non créé dans Supabase.");
+
+//     // 🔹 Étape 2 : récupérer l’ID du département sélectionné
+//     const selectedDep = departements.find(
+//       (d) => d.Nom_Dep === formData.departement
+//     );
+
+//     // 🔹 Étape 3 : envoyer les infos dans ta DB Prisma
+//     const res = await fetch("/api/etudiant", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         user_id: user.id,
+//         nomComplet: formData.nomComplet,
+//         email: formData.email,
+//         annee: formData.annee,
+//         photo: formData.photo,
+//         password: formData.password,
+//         id_Dep: selectedDep?.ID_Dep,
+//       }),
+//     });
+
+//     if (!res.ok) throw new Error("Erreur lors de la création dans la base.");
+
+//     await Swal.fire({
+//       title: "Inscription réussie 🎉",
+//       text: `${formData.nomComplet}, votre compte a été créé.`,
+//       icon: "success",
+//       confirmButtonText: "OK",
+//       customClass: {
+//         confirmButton:
+//           "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md",
+//       },
+//       buttonsStyling: false,
+//     });
+
+//     router.push("/sign-in");
+//   } catch (err: any) {
+//     console.error("Erreur création utilisateur:", err);
+//     Swal.fire("Erreur", err.message, "error");
+//   } finally {
+//     setIsLoading(false);
+//   }
+// };
+
   const handleSubmitForm = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateAllSteps()) {
-      setError("Veuillez remplir correctement tous les champs.");
-      return;
-    }
+  if (!validateAllSteps()) {
+    setError("Veuillez remplir correctement tous les champs.");
+    return;
+  }
 
-    setIsLoading(true);
-    setError(null);
+  setIsLoading(true);
+  setError(null);
 
-    try {
-      await Swal.fire({
-        title: "Compte créé avec succès",
-        text: `${formData.nomComplet}, votre compte a été créé.`,
-        icon: "success",
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton:
-            "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md",
+  try {
+    // 🔹 Étape 1 : créer un compte utilisateur dans Supabase avec rôle étudiant
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
+          role: "student", // 👈 rôle ajouté automatiquement
         },
-        buttonsStyling: false,
-      });
+      },
+    });
 
-      // TODO : intégrer votre API ici
-      console.log("Formulaire soumis :", formData);
-      router.push("/");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    if (signUpError) throw signUpError;
+
+    const user = data.user;
+    if (!user) throw new Error("Utilisateur non créé dans Supabase.");
+
+    // 🔹 Étape 2 : récupérer l’ID du département sélectionné
+    const selectedDep = departements.find(
+      (d) => d.Nom_Dep === formData.departement
+    );
+
+    // 🔹 Étape 3 : envoyer les infos dans ta DB Prisma
+    const res = await fetch("/api/etudiant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: user.id,
+        nomComplet: formData.nomComplet,
+        email: formData.email,
+        annee: formData.annee,
+        photo: formData.photo,
+        password: formData.password,
+        id_Dep: selectedDep?.ID_Dep,
+        role: "student", // 👈 optionnel si tu veux garder le rôle dans Prisma aussi
+      }),
+    });
+
+    if (!res.ok) throw new Error("Erreur lors de la création dans la base.");
+
+    await Swal.fire({
+      title: "Inscription réussie 🎉",
+      text: `${formData.nomComplet}, votre compte a été créé.`,
+      icon: "success",
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton:
+          "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md",
+      },
+      buttonsStyling: false,
+    });
+
+    router.push("/sign-in");
+  } catch (err: any) {
+    console.error("Erreur création utilisateur:", err);
+    Swal.fire("Erreur", err.message, "error");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // 🔹 Contenu dynamique des étapes
   const renderStepContent = () => {
