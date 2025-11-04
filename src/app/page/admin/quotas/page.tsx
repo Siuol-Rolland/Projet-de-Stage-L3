@@ -53,7 +53,7 @@ export default function QuotasPage() {
 
   // 🔹 Charger les départements
   useEffect(() => {
-    fetch("/api/department")
+    fetch("/api/admin/department")
       .then((res) => res.json())
       .then((data) => setDepartements(data))
       .catch((err) => console.error("Erreur départements:", err));
@@ -64,7 +64,7 @@ export default function QuotasPage() {
     if (formData.departement) {
       const selectedDep = departements.find((d) => d.Nom_Dep === formData.departement);
       if (selectedDep) {
-        fetch(`/api/actes?id_Dep=${selectedDep.ID_Dep}`)
+        fetch(`/api/admin/actes?id_Dep=${selectedDep.ID_Dep}`)
           .then((res) => res.json())
           .then((data) => setActes(data))
           .catch((err) => console.error("Erreur actes:", err));
@@ -81,7 +81,7 @@ export default function QuotasPage() {
     if (formData.acte) {
       const selectedActe = actes.find((a) => a.Desc_Actes === formData.acte);
       if (selectedActe) {
-        fetch(`/api/sousactes?id_Actes=${selectedActe.ID_Actes}`)
+        fetch(`/api/admin/sousactes?id_Actes=${selectedActe.ID_Actes}`)
           .then((res) => res.json())
           .then((data) => setSousActes(data))
           .catch((err) => console.error("Erreur sous-actes:", err));
@@ -198,7 +198,7 @@ export default function QuotasPage() {
       const selectedActe = actes.find(a => a.Desc_Actes === formData.acte);
       const selectedSousActe = sousActes.find(sa => sa.Desc_SActes === formData.sousActe);
 
-      const response = await fetch("/api/quotas", {
+      const response = await fetch("/api/admin/quotas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -341,7 +341,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase/supabaseClient";
+import { createClient } from "@/utils/supabase/client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -396,6 +397,7 @@ export default function SignUpPage({
   const [formData, setFormData] = useState<FormDataType>(initialFormData);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+   const supabase = createClient();
 
   // 🔹 Liste dynamique des départements
   const [departements, setDepartements] = useState<{ ID_Dep: number; Nom_Dep: string }[]>([]);
@@ -403,7 +405,7 @@ export default function SignUpPage({
   useEffect(() => {
     const fetchDepartements = async () => {
       try {
-        const res = await fetch("/api/department");
+        const res = await fetch("/api/admin/department");
         if (!res.ok) throw new Error("Erreur lors du chargement des départements");
         const data = await res.json();
         setDepartements(data);
@@ -507,7 +509,7 @@ export default function SignUpPage({
 //     );
 
 //     // 🔹 Étape 3 : envoyer les infos dans ta DB Prisma
-//     const res = await fetch("/api/etudiant", {
+//     const res = await fetch("/api/auth/sing-up", {
 //       method: "POST",
 //       headers: { "Content-Type": "application/json" },
 //       body: JSON.stringify({
@@ -578,7 +580,7 @@ export default function SignUpPage({
     );
 
     // 🔹 Étape 3 : envoyer les infos dans ta DB Prisma
-    const res = await fetch("/api/etudiant", {
+    const res = await fetch("/api/auth/sing-up", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -597,7 +599,7 @@ export default function SignUpPage({
 
     await Swal.fire({
       title: "Inscription réussie 🎉",
-      text: `${formData.nomComplet}, votre compte a été créé.`,
+      text: `${formData.nomComplet}, votre compte a été créé, Veuillez confirmer votre email dans  votre boite mail.`,
       icon: "success",
       confirmButtonText: "OK",
       customClass: {

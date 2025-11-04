@@ -28,7 +28,7 @@ export default function DepartmentPage() {
   // 🔹 Fonction pour récupérer les départements
   const fetchDepartments = async () => {
     try {
-      const res = await fetch("/api/department");
+      const res = await fetch("/api/admin/department");
       const data = await res.json();
       setDepartements(data);
     } catch (error) {
@@ -51,7 +51,7 @@ export default function DepartmentPage() {
     }
 
     try {
-      const res = await fetch("/api/department", {
+      const res = await fetch("/api/admin/department", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Nom_Dep: nomDep }),

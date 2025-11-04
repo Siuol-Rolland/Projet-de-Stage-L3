@@ -233,7 +233,7 @@ export default function ActesPage() {
   // 🔹 Charger les départements depuis la base
   useEffect(() => {
     const fetchDepartments = async () => {
-      const res = await fetch("/api/department", { method: "GET" });
+      const res = await fetch("/api/admin/department", { method: "GET" });
       const data = await res.json();
       setDepartements(data);
     };
@@ -274,7 +274,7 @@ export default function ActesPage() {
   try {
     const sousActesFiltres = sousActes.filter(sa => sa.nom.trim() !== "");
 
-    const res = await fetch("/api/actes", {
+    const res = await fetch("/api/admin/actes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

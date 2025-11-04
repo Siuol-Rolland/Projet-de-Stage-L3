@@ -7,7 +7,7 @@
 
 
   import { cn } from '@/lib/utils';
-  import { supabase } from '@/lib/supabase/supabaseClient';
+  import { createClient } from "@/utils/supabase/client";
 
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
@@ -29,6 +29,8 @@
   }: React.ComponentProps<"form">) {
     const [ isLoading, setIsLoading ] = useState(false);
     const router = useRouter();
+
+    const supabase = createClient();
 
     // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     //   e.preventDefault();
@@ -57,8 +59,10 @@
       const user = data.user;
       if (!user) throw new Error("Utilisateur introuvable.");
 
+      
+
       // 2️⃣ Récupération du rôle depuis ta base Prisma
-      const res = await fetch("/api/check-role", {
+      const res = await fetch("/api/auth/check-role", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: user.id }),
