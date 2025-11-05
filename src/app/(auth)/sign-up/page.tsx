@@ -736,6 +736,9 @@ export default function SignUpPage({
     >
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Créer un compte</h1>
+        <p className="text-muted-foreground text-sm text-balance">
+           Renseignez vos informations pour créer un compte Etudiant
+        </p>
         <p className="text-muted-foreground">
           Étape {currentStep} sur {steps.length} — {steps[currentStep - 1].title}
         </p>
