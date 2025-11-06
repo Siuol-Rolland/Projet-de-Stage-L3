@@ -1,41 +1,108 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { signUpSchema, SignUpValues } from "@/lib/schemas/schema.auth";
+import { useSearchParams } from "next/navigation";
+import Swal from "sweetalert2";
 
-export default function SinUpTeacherPage({
-  className,
-}: React.ComponentProps<"form">) {
+const passwordRegex = /^.{8,}$/;
+
+
+interface SignupData {
+fullName: string;
+email: string;
+password: string;
+confirmPassword: string;
+}
+
+export default function SinUpTeacherPage() {
     const [isLoading, setIsLoading] = useState(false);
+    const [emailFromToken, setEmailFromToken] = useState<string | null>(null);
+    const [tokenError, setTokenError] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+
+    const token = searchParams.get("token");
+
 
     const {
     register,
     handleSubmit,
+    setValue, 
+    getValues,
     formState: { errors },
-  } = useForm<SignUpValues>({
-    resolver: zodResolver(signUpSchema),
-  });
+  } = useForm<SignupData>();
 
-  const onSubmit = async (values: SignUpValues) => {
-    setIsLoading(true);
-    try {
-      // TODO: integrate API
-      console.log("SignUp submitted", values);
-    } finally {
-      setIsLoading(false);
+  // ✅ Vérifier le token dès que la page charge
+  useEffect(() => {
+    if (!token) {
+      setTokenError("Lien invalide ou manquant.");
+      return;
     }
+
+    const verifyToken = async () => {
+      try {
+        const res = await fetch(`/api/auth/invite/verify-token?token=${token}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          setEmailFromToken(data.email);
+          setValue("email", data.email); // préremplit le champ email
+        } else {
+          setTokenError(data.error || "Lien invalide ou expiré.");
+        }
+      } catch (error) {
+        console.error(error);
+        setTokenError("Erreur de vérification du lien.");
+      }
+    };
+
+    verifyToken();
+  }, [token, setValue]);
+
+  const onSubmit = async (values: SignupData) => {
+    setIsLoading(true);
+    
+    const res = await fetch ("/api/auth/sign-up/teacher", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, token }),
+    });
+
+    const data = await res.json();
+
+    setIsLoading(false);
+    
+    if (!res.ok) {
+      Swal.fire({ icon: "error", title: "Erreur", text: data.error });
+      return;
+    }
+
+    await Swal.fire({
+          icon: "success",
+          title: "Compte créé avec succès 🎉",
+          text: "Votre compte administrateur a été créé. Veuillez confirmer votre email dans votre boîte mail avant de vous connecter.",
+          confirmButtonText: "OK",
+        });
+    
+        // ✅ Redirection après clic sur "OK"
+    window.location.href = "/sign-in";
+
   };
+
+  if (tokenError) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-red-500 font-semibold">{tokenError}</p>
+      </div>
+    );
+  }
 
   return (
     <form
-      className={cn("flex flex-col gap-6", className)}
+      className="flex flex-col gap-6"
       onSubmit={handleSubmit(onSubmit)}
     >
         <div className="flex flex-col items-center gap-2 text-center">
@@ -53,7 +120,10 @@ export default function SinUpTeacherPage({
                     type="text"
                     placeholder="Jean Dupont"
                     disabled={isLoading}
-                    {...register("fullName")}
+                    {...register("fullName", {
+                        required: "Nom complet requis",
+                        minLength: { value: 2, message: "Minimum 2 caractères" },
+                    })}
                 />
                 {errors.fullName && (
                     <p className="text-destructive text-sm">
@@ -67,9 +137,11 @@ export default function SinUpTeacherPage({
                 <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
                     disabled={isLoading}
+                    readOnly
+                    value={emailFromToken ?? ""}
                     {...register("email")}
+                    className="bg-gray-100 text-gray-700 cursor-not-allowed"
                 />
                 {errors.email && (
                     <p className="text-destructive text-sm">{errors.email.message}</p>
@@ -82,7 +154,12 @@ export default function SinUpTeacherPage({
                     id="password"
                     type="password"
                     disabled={isLoading}
-                    {...register("password")}
+                    {...register("password", {
+                        required: "Mot de passe requis",
+                        validate: (v) =>
+                            passwordRegex.test(v) ||
+                            "Mot de passe doit contenir plus de 8 caractères",
+                    })}
                 />
                 {errors.password && (
                     <p className="text-destructive text-sm">
@@ -99,7 +176,11 @@ export default function SinUpTeacherPage({
                     id="confirmPassword"
                     type="password"
                     disabled={isLoading}
-                    {...register("confirmPassword")}
+                    {...register("confirmPassword", {
+                       required: "Confirmation requise",
+                        validate: (v) =>
+                            v === getValues("password") || "Les mots de passe ne correspondent pas", 
+                    })}
                 />
                 {errors.confirmPassword && (
                     <p className="text-destructive text-sm">
