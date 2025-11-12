@@ -397,7 +397,8 @@ export default function SignUpPage({
   const [formData, setFormData] = useState<FormDataType>(initialFormData);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-   const supabase = createClient();
+  const supabase = createClient();
+  
 
   // 🔹 Liste dynamique des départements
   const [departements, setDepartements] = useState<{ ID_Dep: number; Nom_Dep: string }[]>([]);
@@ -447,6 +448,43 @@ export default function SignUpPage({
       setError("Veuillez remplir correctement les champs requis.");
     }
   };
+
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const fileName = `${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from("avatars")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    // Récupérer l’URL publique
+    const { data: publicUrlData } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(fileName);
+
+    // Mettre à jour le formData
+    setFormData((prev) => ({ ...prev, photo: publicUrlData.publicUrl }));
+
+    Swal.fire({
+      icon: "success",
+      title: "Photo téléchargée !",
+      text: "Votre photo d'identité a été enregistrée.",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  } catch (err: any) {
+    console.error("Erreur upload:", err);
+    Swal.fire("Erreur", err.message, "error");
+  }
+};
+
 
   // 🔹 Soumission finale
   // const handleSubmitForm = async (e: React.FormEvent) => {
@@ -580,7 +618,7 @@ export default function SignUpPage({
     );
 
     // 🔹 Étape 3 : envoyer les infos dans ta DB Prisma
-    const res = await fetch("/api/auth/sing-up", {
+    const res = await fetch("/api/auth/sign-up", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -697,14 +735,22 @@ export default function SignUpPage({
       case 3:
         return (
           <div className="space-y-4">
-            <InputField
-              label="Photo d'identité"
+            <Label>Photo d'identité</Label>
+            <Input
               type="file"
-              value={formData.photo}
-              onChange={(v) => handleInputChange("photo", v)}
+              accept="image/*"
+              onChange={(e) => handlePhotoUpload(e)}
             />
+            {formData.photo && (
+              <img
+                src={formData.photo}
+                alt="Aperçu"
+                className="w-24 h-24 rounded-full object-cover mt-2"
+              />
+            )}
           </div>
         );
+
 
       case 4:
         return (

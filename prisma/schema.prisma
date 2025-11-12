@@ -10,118 +10,116 @@ datasource db {
 }
 
 model ADMINISTRATEUR {
-  ID_Admin      Int    @id @default(autoincrement())
-  user_id       String @unique  // 👈 UUID du user Supabase
+  ID_Admin      Int       @id @default(autoincrement())
   Nom_Admin     String
-  Email_Admin   String @unique
+  Email_Admin   String    @unique
   MotPass_Admin String
+  id_Quotas     Int?
+  id_Paie       Int?
 
-  id_Quotas Int?
-  id_Paie   Int?
-  quotas    QUOTAS?   @relation(fields: [id_Quotas], references: [ID_Quotas])
-  paie      PAIEMENT? @relation(fields: [id_Paie], references: [ID_Paie])
+  user_id       String    @unique
+
+  quotas QUOTAS[]
+  paiements PAIEMENT[]
 }
 
 model ETUDIANT {
-  ID_Etudiant Int    @id @default(autoincrement())
-  user_id       String @unique  // 👈 UUID du user Supabase
+  ID_Etudiant Int         @id @default(autoincrement())
+  user_id     String      @unique 
   FullName_Et String
-  Email_Et    String @unique
-  Photo_Et    String?
+  Email_Et    String      @unique
   Annee_Et    String
   Dette       Float?
   MotPass_Et  String
-
-  id_Paie  Int?
-  id_Actes Int?
-  id_Dep   Int
-
-  paie        PAIEMENT?   @relation(fields: [id_Paie], references: [ID_Paie])
-  actes       ACTES?      @relation(fields: [id_Actes], references: [ID_Actes])
-  departement DEPARTEMENT @relation(fields: [id_Dep], references: [ID_Dep])
-}
-
-model DEPARTEMENT {
-  ID_Dep  Int    @id @default(autoincrement())
-  Nom_Dep String
-
-  // Un département peut avoir plusieurs étudiants
-  etudiants ETUDIANT[]
-  // Un département peut avoir plusieurs actes
-  actes     ACTES[]
-  // Un département peut avoir plusieurs quotas
-  quotas    QUOTAS[]
-}
-
-model ACTES {
-  ID_Actes   Int    @id @default(autoincrement())
-  Desc_Actes String
-
-  // Relation : un acte appartient à un seul département
+  Photo_Et    String?
+  
   id_Dep      Int
   departement DEPARTEMENT @relation(fields: [id_Dep], references: [ID_Dep])
 
-  // Un acte peut avoir plusieurs sous-actes
-  sous_actes SOUS_ACTES[]
+  paiements PAIEMENT[]
+  sousActes SOUS_ACTES[]
+}
 
-  // Un acte peut concerner plusieurs étudiants
+model DEPARTEMENT {
+  ID_Dep    Int        @id @default(autoincrement())
+  Nom_Dep   String
+
+  actes     ACTES[]
   etudiants ETUDIANT[]
+  quotas    QUOTAS[]
+
+  professeurs PROFESSEURS[] @relation("Prof_Dep")
+}
+
+model ACTES {
+  ID_Actes    Int          @id @default(autoincrement())
+  Desc_Actes  String
+
+  id_Dep      Int
+  departement DEPARTEMENT  @relation(fields: [id_Dep], references: [ID_Dep])
+
+  sous_actes SOUS_ACTES[]
 }
 
 model SOUS_ACTES {
-  ID_SActes     Int       @id @default(autoincrement())
+  ID_SActes     Int           @id @default(autoincrement())
   Desc_SActes   String
   Prix          Float
   Note          Float?
   Date_Realise  DateTime?
   Statut_Valide Boolean
 
-  // Relation : un sous-acte appartient à un seul acte
-  id_Actes Int
-  acte     ACTES @relation(fields: [id_Actes], references: [ID_Actes])
+  id_Actes      Int
+  acte          ACTES         @relation(fields: [id_Actes], references: [ID_Actes])
+  
+  id_Etudiant Int?
+  etudiant ETUDIANT? @relation(fields: [id_Etudiant], references: [ID_Etudiant])
 
-  // Un sous-acte peut être géré par plusieurs professeurs
-  professeurs PROFESSEURS[]
-
-  quotas QUOTAS[] @relation("Attribuer")
-
+  id_Prof Int?
+  professeur PROFESSEURS? @relation(fields: [id_Prof], references: [ID_Prof])
+ 
+  quotas        QUOTAS[]      @relation("Attribuer")
 }
 
 model PROFESSEURS {
-  ID_Prof      Int    @id @default(autoincrement())
-  user_id       String @unique  // 👈 UUID du user Supabase
+  ID_Prof      Int         @id @default(autoincrement())
+  user_id      String      @unique
   Nom_Prof     String
-  Email_Prof   String @unique
+  Email_Prof   String      @unique
   MotPass_Prof String
 
-  id_SActes  Int?
-  sous_actes SOUS_ACTES? @relation(fields: [id_SActes], references: [ID_SActes])
+  departements DEPARTEMENT[] @relation("Prof_Dep")
+
+  sousActes SOUS_ACTES[]
 }
 
 model QUOTAS {
-  ID_Quotas  Int      @id @default(autoincrement())
-  Annee      String
-  Nombre     Int
-  Date_Debut DateTime
-  Date_Fin   DateTime
+  ID_Quotas      Int              @id @default(autoincrement())
+  Annee          String
+  Nombre         Int
+  Date_Debut     DateTime
+  Date_Fin       DateTime
 
-  id_Dep Int
-  departement DEPARTEMENT @relation(fields: [id_Dep], references: [ID_Dep])
+  id_Dep         Int
+  departement    DEPARTEMENT      @relation(fields: [id_Dep], references: [ID_Dep])
 
-  admin ADMINISTRATEUR[]
-
-  sous_actes SOUS_ACTES[] @relation("Attribuer")
+  id_Admin Int
+  admin ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
+  
+  sous_actes     SOUS_ACTES[]     @relation("Attribuer")
 }
 
 model PAIEMENT {
-  ID_Paie     Int      @id @default(autoincrement())
-  Montant     Float
-  Type_Paie   String
-  Date_Paie   DateTime
-  Statut_Paie String
+  ID_Paie        Int              @id @default(autoincrement())
+  Montant        Float
+  Type_Paie      String
+  Date_Paie      DateTime
+  Statut_Paie    String
 
-  admin    ADMINISTRATEUR[]
-  etudiant ETUDIANT[]
+  id_Admin Int
+  admin ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
+
+  id_Etudiant Int
+  etudiant ETUDIANT @relation(fields: [id_Etudiant], references: [ID_Etudiant])
+
 }
-
-

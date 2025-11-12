@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"; // 🧩 shadcn/ui Dialog
+import Swal from "sweetalert2";
 
 export default function EtQuotasPage() {
   const [etudiant, setEtudiant] = useState<any>(null);
@@ -93,17 +94,73 @@ export default function EtQuotasPage() {
 
   // 🔹 Simulation de soumission
   const handleSoumettre = async () => {
+    if (selectedActe === null) return;
+
     setIsLoading(true);
+    const selected = actes[selectedActe];
+    const quota = quotas.find(
+      (q) =>
+        q.sous_actes.some(
+          (s: any) => s.Desc_SActes === selected.acte
+        )
+    );
+
     try {
-      await new Promise((res) => setTimeout(res, 2000)); // Simule une requête
-      setOpenModal(false);
-      alert("Réalisation enregistrée !");
+      const res = await fetch("/api/students/quotas/realiser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          etudiantId: etudiant.ID_Etudiant,
+          sousActeId: quota.sous_actes[0].ID_SActes,
+          quotaId: quota.ID_Quotas,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setOpenModal(false);
+
+        // ✅ Notification de succès à l'étudiant
+        Swal.fire({
+          icon: "success",
+          title: "Réalisation réussie !",
+          text: `Le sous-acte "${data.sousActe.Desc_SActes}" a été bien réalisé. 
+Une notification a été envoyée aux professeurs pour évaluation.`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#3085d6",
+        });
+
+        // 🧩 Mettre à jour la liste de quotas localement
+        setQuotas((prev) =>
+          prev.map((q) =>
+            q.ID_Quotas === quota.ID_Quotas
+              ? { ...q, Nombre: q.Nombre - 1 }
+              : q
+          )
+        );
+
+        // 🔔 Simulation d’envoi de notification profs (à intégrer via WebSocket ou Supabase Realtime)
+        console.log("🔔 Notification envoyée à tous les professeurs !");
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Erreur",
+          text: "Impossible d’enregistrer la réalisation.",
+        });
+      }
     } catch (error) {
       console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: "Une erreur est survenue lors de la soumission.",
+      });
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const selectedSousActe = selectedActe !== null ? actes[selectedActe]?.acte : "";
 
@@ -120,7 +177,7 @@ export default function EtQuotasPage() {
           </div>
 
           <div className="text-right">
-            <span className="text-green-600 text-base font-semibold">{totalActes} actes</span>
+            <span className="text-primary text-base font-semibold">{totalActes}</span>
           </div>
         </header>
 
@@ -152,7 +209,7 @@ export default function EtQuotasPage() {
 
         <div className="flex justify-end mt-4">
           <Button onClick={() => setOpenModal(true)} disabled={selectedActe === null}>
-            Réalisé
+            Réaliser
           </Button>
         </div>
       </section>

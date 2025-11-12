@@ -1,0 +1,175 @@
+-- CreateTable
+CREATE TABLE "ADMINISTRATEUR" (
+    "ID_Admin" SERIAL NOT NULL,
+    "Nom_Admin" TEXT NOT NULL,
+    "Email_Admin" TEXT NOT NULL,
+    "MotPass_Admin" TEXT NOT NULL,
+    "id_Quotas" INTEGER,
+    "id_Paie" INTEGER,
+    "user_id" TEXT NOT NULL,
+
+    CONSTRAINT "ADMINISTRATEUR_pkey" PRIMARY KEY ("ID_Admin")
+);
+
+-- CreateTable
+CREATE TABLE "ETUDIANT" (
+    "ID_Etudiant" SERIAL NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "FullName_Et" TEXT NOT NULL,
+    "Email_Et" TEXT NOT NULL,
+    "Annee_Et" TEXT NOT NULL,
+    "Dette" DOUBLE PRECISION,
+    "MotPass_Et" TEXT NOT NULL,
+    "Photo_Et" TEXT,
+    "id_Dep" INTEGER NOT NULL,
+
+    CONSTRAINT "ETUDIANT_pkey" PRIMARY KEY ("ID_Etudiant")
+);
+
+-- CreateTable
+CREATE TABLE "DEPARTEMENT" (
+    "ID_Dep" SERIAL NOT NULL,
+    "Nom_Dep" TEXT NOT NULL,
+
+    CONSTRAINT "DEPARTEMENT_pkey" PRIMARY KEY ("ID_Dep")
+);
+
+-- CreateTable
+CREATE TABLE "ACTES" (
+    "ID_Actes" SERIAL NOT NULL,
+    "Desc_Actes" TEXT NOT NULL,
+    "id_Dep" INTEGER NOT NULL,
+
+    CONSTRAINT "ACTES_pkey" PRIMARY KEY ("ID_Actes")
+);
+
+-- CreateTable
+CREATE TABLE "SOUS_ACTES" (
+    "ID_SActes" SERIAL NOT NULL,
+    "Desc_SActes" TEXT NOT NULL,
+    "Prix" DOUBLE PRECISION NOT NULL,
+    "Note" DOUBLE PRECISION,
+    "Date_Realise" TIMESTAMP(3),
+    "Statut_Valide" BOOLEAN NOT NULL,
+    "id_Actes" INTEGER NOT NULL,
+    "id_Etudiant" INTEGER NOT NULL,
+    "id_Prof" INTEGER,
+
+    CONSTRAINT "SOUS_ACTES_pkey" PRIMARY KEY ("ID_SActes")
+);
+
+-- CreateTable
+CREATE TABLE "PROFESSEURS" (
+    "ID_Prof" SERIAL NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "Nom_Prof" TEXT NOT NULL,
+    "Email_Prof" TEXT NOT NULL,
+    "MotPass_Prof" TEXT NOT NULL,
+
+    CONSTRAINT "PROFESSEURS_pkey" PRIMARY KEY ("ID_Prof")
+);
+
+-- CreateTable
+CREATE TABLE "QUOTAS" (
+    "ID_Quotas" SERIAL NOT NULL,
+    "Annee" TEXT NOT NULL,
+    "Nombre" INTEGER NOT NULL,
+    "Date_Debut" TIMESTAMP(3) NOT NULL,
+    "Date_Fin" TIMESTAMP(3) NOT NULL,
+    "id_Dep" INTEGER NOT NULL,
+    "id_Admin" INTEGER NOT NULL,
+
+    CONSTRAINT "QUOTAS_pkey" PRIMARY KEY ("ID_Quotas")
+);
+
+-- CreateTable
+CREATE TABLE "PAIEMENT" (
+    "ID_Paie" SERIAL NOT NULL,
+    "Montant" DOUBLE PRECISION NOT NULL,
+    "Type_Paie" TEXT NOT NULL,
+    "Date_Paie" TIMESTAMP(3) NOT NULL,
+    "Statut_Paie" TEXT NOT NULL,
+    "id_Admin" INTEGER NOT NULL,
+    "id_Etudiant" INTEGER NOT NULL,
+
+    CONSTRAINT "PAIEMENT_pkey" PRIMARY KEY ("ID_Paie")
+);
+
+-- CreateTable
+CREATE TABLE "_Prof_Dep" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL,
+
+    CONSTRAINT "_Prof_Dep_AB_pkey" PRIMARY KEY ("A","B")
+);
+
+-- CreateTable
+CREATE TABLE "_Attribuer" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL,
+
+    CONSTRAINT "_Attribuer_AB_pkey" PRIMARY KEY ("A","B")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ADMINISTRATEUR_Email_Admin_key" ON "ADMINISTRATEUR"("Email_Admin");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ADMINISTRATEUR_user_id_key" ON "ADMINISTRATEUR"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ETUDIANT_user_id_key" ON "ETUDIANT"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ETUDIANT_Email_Et_key" ON "ETUDIANT"("Email_Et");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PROFESSEURS_user_id_key" ON "PROFESSEURS"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PROFESSEURS_Email_Prof_key" ON "PROFESSEURS"("Email_Prof");
+
+-- CreateIndex
+CREATE INDEX "_Prof_Dep_B_index" ON "_Prof_Dep"("B");
+
+-- CreateIndex
+CREATE INDEX "_Attribuer_B_index" ON "_Attribuer"("B");
+
+-- AddForeignKey
+ALTER TABLE "ETUDIANT" ADD CONSTRAINT "ETUDIANT_id_Dep_fkey" FOREIGN KEY ("id_Dep") REFERENCES "DEPARTEMENT"("ID_Dep") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ACTES" ADD CONSTRAINT "ACTES_id_Dep_fkey" FOREIGN KEY ("id_Dep") REFERENCES "DEPARTEMENT"("ID_Dep") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SOUS_ACTES" ADD CONSTRAINT "SOUS_ACTES_id_Actes_fkey" FOREIGN KEY ("id_Actes") REFERENCES "ACTES"("ID_Actes") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SOUS_ACTES" ADD CONSTRAINT "SOUS_ACTES_id_Etudiant_fkey" FOREIGN KEY ("id_Etudiant") REFERENCES "ETUDIANT"("ID_Etudiant") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SOUS_ACTES" ADD CONSTRAINT "SOUS_ACTES_id_Prof_fkey" FOREIGN KEY ("id_Prof") REFERENCES "PROFESSEURS"("ID_Prof") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "QUOTAS" ADD CONSTRAINT "QUOTAS_id_Dep_fkey" FOREIGN KEY ("id_Dep") REFERENCES "DEPARTEMENT"("ID_Dep") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "QUOTAS" ADD CONSTRAINT "QUOTAS_id_Admin_fkey" FOREIGN KEY ("id_Admin") REFERENCES "ADMINISTRATEUR"("ID_Admin") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PAIEMENT" ADD CONSTRAINT "PAIEMENT_id_Admin_fkey" FOREIGN KEY ("id_Admin") REFERENCES "ADMINISTRATEUR"("ID_Admin") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PAIEMENT" ADD CONSTRAINT "PAIEMENT_id_Etudiant_fkey" FOREIGN KEY ("id_Etudiant") REFERENCES "ETUDIANT"("ID_Etudiant") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_Prof_Dep" ADD CONSTRAINT "_Prof_Dep_A_fkey" FOREIGN KEY ("A") REFERENCES "DEPARTEMENT"("ID_Dep") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_Prof_Dep" ADD CONSTRAINT "_Prof_Dep_B_fkey" FOREIGN KEY ("B") REFERENCES "PROFESSEURS"("ID_Prof") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_Attribuer" ADD CONSTRAINT "_Attribuer_A_fkey" FOREIGN KEY ("A") REFERENCES "QUOTAS"("ID_Quotas") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_Attribuer" ADD CONSTRAINT "_Attribuer_B_fkey" FOREIGN KEY ("B") REFERENCES "SOUS_ACTES"("ID_SActes") ON DELETE CASCADE ON UPDATE CASCADE;

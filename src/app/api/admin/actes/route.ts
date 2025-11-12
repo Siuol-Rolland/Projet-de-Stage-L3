@@ -36,18 +36,22 @@ export async function POST(request: Request) {
 
 // ✅ Récupérer les actes selon le département
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id_Dep = searchParams.get("id_Dep");
-
-  if (!id_Dep) {
-    return NextResponse.json({ error: "ID du département manquant" }, { status: 400 });
-  }
-
   try {
+    const { searchParams } = new URL(request.url);
+    const id_Dep = searchParams.get("id_Dep");
+
+    if (!id_Dep) {
+      return NextResponse.json(
+        { error: "ID du département manquant" },
+        { status: 400 }
+      );
+    }
+
     const actes = await prisma.aCTES.findMany({
       where: { id_Dep: Number(id_Dep) },
       orderBy: { ID_Actes: "asc" },
     });
+
     return NextResponse.json(actes);
   } catch (error) {
     console.error("Erreur GET actes :", error);
