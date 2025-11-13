@@ -46,14 +46,34 @@ export default function EtQuotasPage() {
   const today = new Date();
 
   // 🔹 Charger étudiant
+  // useEffect(() => {
+  //   const load = async () => {
+  //     const etRes = await fetch("/api/students/me");
+  //     const et = await etRes.json();
+  //     setEtudiant(et);
+  //   };
+  //   load();
+  // }, []);
   useEffect(() => {
-    const load = async () => {
+  const load = async () => {
+    try {
       const etRes = await fetch("/api/students/me");
+
+      if (!etRes.ok) {
+        const errText = await etRes.text();
+        console.error("Erreur API:", etRes.status, errText);
+        return;
+      }
+
       const et = await etRes.json();
       setEtudiant(et);
-    };
-    load();
-  }, []);
+    } catch (error) {
+      console.error("Erreur réseau:", error);
+    }
+  };
+  load();
+}, []);
+
 
   // 🔹 Écoute en temps réel des quotas
   useEffect(() => {

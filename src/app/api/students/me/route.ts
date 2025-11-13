@@ -6,26 +6,61 @@ import { PrismaClient } from "@/generated/prisma";
 
 const prisma = new PrismaClient();
 
+// export async function GET() {
+//   const supabase = await createClient();
+//   const {
+//     data: { user },
+//   } = await supabase.auth.getUser();
+
+//   if (!user) {
+//     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+//   }
+
+//   const etudiant = await prisma.eTUDIANT.findUnique({
+//     where: { user_id: user.id },
+//     include: {
+//       departement: true,
+//     },
+//   });
+
+//   if (!etudiant) {
+//     return NextResponse.json({ error: "Étudiant introuvable" }, { status: 404 });
+//   }
+
+//   return NextResponse.json(etudiant);
+// }
+
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    if (userError) {
+      console.error("Erreur Supabase:", userError.message);
+    }
+    if (!user) {
+      console.warn("⚠️ Aucun utilisateur connecté");
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
+    console.log("👤 Utilisateur connecté:", user.id);
+
+    const etudiant = await prisma.eTUDIANT.findUnique({
+      where: { user_id: user.id },
+      include: { departement: true },
+    });
+
+    console.log("🎓 Étudiant trouvé:", etudiant);
+
+    if (!etudiant) {
+      return NextResponse.json({ error: "Étudiant introuvable" }, { status: 404 });
+    }
+
+    return NextResponse.json(etudiant);
+  } catch (err) {
+    console.error("💥 Erreur serveur détaillée:", err);
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
-
-  const etudiant = await prisma.eTUDIANT.findUnique({
-    where: { user_id: user.id },
-    include: {
-      departement: true,
-    },
-  });
-
-  if (!etudiant) {
-    return NextResponse.json({ error: "Étudiant introuvable" }, { status: 404 });
-  }
-
-  return NextResponse.json(etudiant);
 }
+
+

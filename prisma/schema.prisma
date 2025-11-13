@@ -9,6 +9,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum TypeNotification {
+  REALISATION   // Étudiant réalise un acte → notification pour le professeur
+  EVALUATION    // Professeur évalue un acte → notification pour l’étudiant
+  PAIEMENT      // Étudiant effectue un paiement → notification pour l’admin
+  VALIDATION    // Admin valide un paiement → notification pour l’étudiant
+}
+
 model ADMINISTRATEUR {
   ID_Admin      Int       @id @default(autoincrement())
   Nom_Admin     String
@@ -21,6 +28,8 @@ model ADMINISTRATEUR {
 
   quotas QUOTAS[]
   paiements PAIEMENT[]
+
+  notifications NOTIFICATION[]  @relation("Notif_Admin")
 }
 
 model ETUDIANT {
@@ -38,6 +47,8 @@ model ETUDIANT {
 
   paiements PAIEMENT[]
   sousActes SOUS_ACTES[]
+
+  notifications NOTIFICATION[] @relation("Notif_Etudiant")
 }
 
 model DEPARTEMENT {
@@ -79,6 +90,8 @@ model SOUS_ACTES {
   professeur PROFESSEURS? @relation(fields: [id_Prof], references: [ID_Prof])
  
   quotas        QUOTAS[]      @relation("Attribuer")
+
+  notifications  NOTIFICATION[] @relation("Notif_SousActe")
 }
 
 model PROFESSEURS {
@@ -91,6 +104,8 @@ model PROFESSEURS {
   departements DEPARTEMENT[] @relation("Prof_Dep")
 
   sousActes SOUS_ACTES[]
+
+  notifications NOTIFICATION[]  @relation("Notif_Prof")
 }
 
 model QUOTAS {
@@ -103,8 +118,8 @@ model QUOTAS {
   id_Dep         Int
   departement    DEPARTEMENT      @relation(fields: [id_Dep], references: [ID_Dep])
 
-  id_Admin Int
-  admin ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
+  id_Admin       Int
+  admin          ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
   
   sous_actes     SOUS_ACTES[]     @relation("Attribuer")
 }
@@ -122,4 +137,32 @@ model PAIEMENT {
   id_Etudiant Int
   etudiant ETUDIANT @relation(fields: [id_Etudiant], references: [ID_Etudiant])
 
+  notifications NOTIFICATION[]  @relation("Notif_Paiement")
 }
+
+model NOTIFICATION {
+  ID_Notification Int             @id @default(autoincrement())
+  Message         String
+  Type            TypeNotification
+  Date_Envoi      DateTime        @default(now())
+  Lu              Boolean         @default(false)
+
+  // Relations facultatives vers un sous-acte ou paiement
+  id_SActes       Int?
+  sous_acte       SOUS_ACTES?     @relation("Notif_SousActe", fields: [id_SActes], references: [ID_SActes])
+
+  id_Paie         Int?
+  paiement        PAIEMENT?       @relation("Notif_Paiement", fields: [id_Paie], references: [ID_Paie])
+
+  // Utilisateur cible (étudiant, prof, admin)
+  id_Etudiant     Int?
+  etudiant        ETUDIANT?       @relation("Notif_Etudiant", fields: [id_Etudiant], references: [ID_Etudiant])
+
+  id_Prof         Int?
+  professeur      PROFESSEURS?    @relation("Notif_Prof", fields: [id_Prof], references: [ID_Prof])
+
+  id_Admin        Int?
+  admin           ADMINISTRATEUR? @relation("Notif_Admin", fields: [id_Admin], references: [ID_Admin])
+}
+
+

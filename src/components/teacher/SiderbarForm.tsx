@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutDashboard, LogOut, Quote, Stethoscope, Wallet, Wallet2 } from 'lucide-react'
+import { Hospital, LayoutDashboard, LogOut, Quote, Stethoscope, Users, Wallet, Wallet2 } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 import { createClient } from "@/utils/supabase/client";
@@ -53,26 +53,26 @@ export default function SidebarForm() {
             <span>Tableau de bord</span>
           </Link>
           <Link
-            href="#"
+            href="/page/teacher/department"
             className='flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:text-white hover:bg-primary/90 transition'
           >
-            <Quote className='w-5 h-5'/>
-            <span></span>
+            <Hospital className='w-5 h-5'/>
+            <span>Département</span>
           </Link>
           <Link
-            href="#"
+            href="/page/teacher/students"
             className='flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:text-white hover:bg-primary/90 transition'
           >
-            <Wallet2 className='w-5 h-5'/>
-            <span></span>
+            <Users className='w-5 h-5'/>
+            <span>Etudiants</span>
           </Link>
-          <Link
+          {/* <Link
             href="#"
             className='flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:text-white hover:bg-primary/90 transition'
           >
             <LayoutDashboard className='w-5 h-5'/>
             <span></span>
-          </Link>
+          </Link> */}
         </nav>
 
         {/* Footer Sidebar */}
