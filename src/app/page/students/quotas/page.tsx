@@ -17,6 +17,9 @@ export default function EtQuotasPage() {
   const [quotas, setQuotas] = useState<any[]>([]);
   const [selectedActe, setSelectedActe] = useState<number | null>(null);
 
+  const [realisations, setRealisations] = useState<any[]>([]);
+
+
   // 📅 Dates
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -44,6 +47,9 @@ export default function EtQuotasPage() {
   });
 
   const today = new Date();
+
+  const filteredQuotas = quotas.filter((q) => q.Nombre > 0);
+
 
   // 🔹 Charger étudiant
   // useEffect(() => {
@@ -99,16 +105,29 @@ export default function EtQuotasPage() {
     }
   };
 
-  const actes = quotas.flatMap((q) =>
+  useEffect(() => {
+  async function fetchRealisations() {
+    const res = await fetch("/api/students/quotas/realiser/me");
+    const data = await res.json();
+    setRealisations(data);
+  }
+
+  fetchRealisations();
+}, []);
+
+
+  const actes = filteredQuotas.flatMap((q) =>
     q.sous_actes.map((s: any) => ({
       acte: s.Desc_SActes,
+      prix: s.Prix,
       nombre: q.Nombre,
       Date_Debut: q.Date_Debut,
       Date_Fin: q.Date_Fin,
     }))
-  );
+  );  
 
-  const totalActes = quotas.reduce((sum, q) => sum + q.Nombre, 0);
+  const totalActes = filteredQuotas.reduce((sum, q) => sum + q.Nombre, 0);
+
 
   if (!etudiant) return <p>Chargement...</p>;
 
@@ -142,14 +161,16 @@ export default function EtQuotasPage() {
         setOpenModal(false);
 
         // ✅ Notification de succès à l'étudiant
+        const { realisation } = data;
         Swal.fire({
           icon: "success",
           title: "Réalisation réussie !",
-          text: `Le sous-acte "${data.sousActe.Desc_SActes}" a été bien réalisé. 
-Une notification a été envoyée aux professeurs pour évaluation.`,
+          text: `Le sous-acte "${realisation.sousActe.Desc_SActes}" a été bien réalisé. 
+            Une notification a été envoyée aux professeurs pour évaluation.`,
           confirmButtonText: "OK",
           confirmButtonColor: "#3085d6",
         });
+
 
         // 🧩 Mettre à jour la liste de quotas localement
         setQuotas((prev) =>
@@ -206,16 +227,18 @@ Une notification a été envoyée aux professeurs pour évaluation.`,
             <div
               key={i}
               onClick={() => handleSelectQuota(i)}
-              className={`flex flex-col px-3 py-2 rounded-lg cursor-pointer ${
+              className={`flex justify-between items-center px-3 py-2 rounded-lg cursor-pointer ${
                 selectedActe === i ? "bg-blue-100 border border-blue-400" : "hover:bg-blue-50"
               }`}
             >
               <div className="flex items-center gap-2">
                 <span className={`font-bold ${selectedActe === i ? "text-blue-700" : "text-blue-600"}`}>•</span>
                 <span>
-                  {item.nombre} {item.acte}
+                  {item.nombre} {item.acte} 
                 </span>
               </div>
+
+               <span className="font-semibold">{item.prix} Ariary</span> {/* 🔹 Prix */}
 
               {selectedActe === i && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -284,15 +307,33 @@ Une notification a été envoyée aux professeurs pour évaluation.`,
           </div>
         </div>
 
-        {/* QUOTAS TERMINÉS */}
+        {/* QUOTAS RÉALISÉS */}
         <div className="bg-white dark:bg-primary-foreground rounded-2xl p-6 shadow-sm border">
-          <h3 className="font-semibold mb-4">Quotas terminés</h3>
+          <h3 className="font-semibold mb-4">Quotas réalisés</h3>
+
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>✅ 2 traitements de carie</li>
-            <li>✅ 1 extraction</li>
-            <li>⏳ 3 détartrages restants</li>
+            {realisations.length === 0 && (
+              <li>Aucun quota réalisé pour le moment.</li>
+            )}
+
+            {realisations.map((r) => (
+              <li key={r.ID_Realisation}>
+                {r.Statut_Valide === false && r.Note === null ? (
+                  <>
+                    ⏳ <strong>{r.sousActe.Desc_SActes}</strong> — 
+                    <span className="text-yellow-600">en cours d'évaluation</span>
+                  </>
+                ) : (
+                  <>
+                    ✅ <strong>{r.sousActe.Desc_SActes}</strong> — 
+                    <span className="text-green-600">noté : {r.Note}/20</span>
+                  </>
+                )}
+              </li>
+            ))}
           </ul>
         </div>
+
       </aside>
 
       {/* 🧩 MODAL DE CONFIRMATION */}
@@ -306,7 +347,8 @@ Une notification a été envoyée aux professeurs pour évaluation.`,
 
           <p className="text-sm text-muted-foreground mt-2">
             Voulez-vous réaliser le{" "}
-            <span className="font-semibold text-blue-700">{selectedSousActe}</span> ?
+            <span className="font-semibold text-blue-700">{selectedSousActe}</span>
+              {" "}pour <span className="font-semibold">{selectedActe !== null ? actes[selectedActe].prix : 0} Ariary</span> ?
           </p>
 
           <DialogFooter className="flex justify-end gap-3 mt-6">

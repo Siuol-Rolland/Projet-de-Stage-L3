@@ -171,10 +171,7 @@ export async function GET(req: Request) {
     return NextResponse.json(notifications);
   } catch (error) {
     console.error("Erreur GET notifications étudiant :", error);
-    return NextResponse.json(
-      { success: false, message: (error as Error).message },
-      { status: 401 }
-    );
+    return NextResponse.json([], { status: 200 });
   }
 }
 

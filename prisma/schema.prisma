@@ -46,9 +46,12 @@ model ETUDIANT {
   departement DEPARTEMENT @relation(fields: [id_Dep], references: [ID_Dep])
 
   paiements PAIEMENT[]
-  sousActes SOUS_ACTES[]
+  // sousActes SOUS_ACTES[]
 
   notifications NOTIFICATION[] @relation("Notif_Etudiant")
+
+  realisations REALISATION[]
+
 }
 
 model DEPARTEMENT {
@@ -76,22 +79,26 @@ model SOUS_ACTES {
   ID_SActes     Int           @id @default(autoincrement())
   Desc_SActes   String
   Prix          Float
-  Note          Float?
-  Date_Realise  DateTime?
-  Statut_Valide Boolean
+  // Note          Float?
+  // Date_Realise  DateTime?
+  // Statut_Valide Boolean
+
 
   id_Actes      Int
   acte          ACTES         @relation(fields: [id_Actes], references: [ID_Actes])
   
-  id_Etudiant Int?
-  etudiant ETUDIANT? @relation(fields: [id_Etudiant], references: [ID_Etudiant])
+  // id_Etudiant Int?
+  // etudiant ETUDIANT? @relation(fields: [id_Etudiant], references: [ID_Etudiant])
 
-  id_Prof Int?
-  professeur PROFESSEURS? @relation(fields: [id_Prof], references: [ID_Prof])
+  // id_Prof Int?
+  // professeur PROFESSEURS? @relation(fields: [id_Prof], references: [ID_Prof])
  
   quotas        QUOTAS[]      @relation("Attribuer")
 
   notifications  NOTIFICATION[] @relation("Notif_SousActe")
+
+  realisations REALISATION[]
+
 }
 
 model PROFESSEURS {
@@ -103,9 +110,12 @@ model PROFESSEURS {
 
   departements DEPARTEMENT[] @relation("Prof_Dep")
 
-  sousActes SOUS_ACTES[]
+  // sousActes SOUS_ACTES[]
 
   notifications NOTIFICATION[]  @relation("Notif_Prof")
+
+  realisations REALISATION[]
+
 }
 
 model QUOTAS {
@@ -138,6 +148,9 @@ model PAIEMENT {
   etudiant ETUDIANT @relation(fields: [id_Etudiant], references: [ID_Etudiant])
 
   notifications NOTIFICATION[]  @relation("Notif_Paiement")
+
+  realisations REALISATION[]
+
 }
 
 model NOTIFICATION {
@@ -146,6 +159,11 @@ model NOTIFICATION {
   Type            TypeNotification
   Date_Envoi      DateTime        @default(now())
   Lu              Boolean         @default(false)
+
+  // Nouvelle relation vers realisation
+  id_Realisation  Int?
+  realisation     REALISATION? @relation("Notif_Realisation", fields: [id_Realisation], references: [ID_Realisation])
+
 
   // Relations facultatives vers un sous-acte ou paiement
   id_SActes       Int?
@@ -164,5 +182,32 @@ model NOTIFICATION {
   id_Admin        Int?
   admin           ADMINISTRATEUR? @relation("Notif_Admin", fields: [id_Admin], references: [ID_Admin])
 }
+
+model REALISATION {
+  ID_Realisation Int       @id @default(autoincrement())
+  Date_Realise   DateTime
+  Note           Float?
+  Statut_Valide  Boolean   @default(false)
+
+  // Relation vers le sous-acte (définition)
+  id_SActes      Int
+  sousActe       SOUS_ACTES @relation(fields: [id_SActes], references: [ID_SActes])
+
+  // Étudiant qui a réalisé l’acte
+  id_Etudiant    Int
+  etudiant       ETUDIANT   @relation(fields: [id_Etudiant], references: [ID_Etudiant])
+
+  // Professeur qui valide l’acte
+  id_Prof        Int?
+  professeur     PROFESSEURS? @relation(fields: [id_Prof], references: [ID_Prof])
+
+  // Paiement associé (si l'acte implique un paiement)
+  id_Paie        Int?
+  paiement       PAIEMENT?  @relation(fields: [id_Paie], references: [ID_Paie])
+
+  // Notifications générées par cette réalisation
+  notifications  NOTIFICATION[] @relation("Notif_Realisation")
+}
+
 
 

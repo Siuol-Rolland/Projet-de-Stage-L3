@@ -218,9 +218,16 @@ export default function HeaderFormStudents() {
       try {
         const res = await fetch("/api/students/notification");
         const data = await res.json();
-        setNotifications(data || []);
+        // setNotifications(data || []);
+        if (Array.isArray(data)) {
+          setNotifications(data);
+        } else {
+          console.warn("Réponse inattendue API:", data);
+          setNotifications([]);
+        }
       } catch (err) {
         console.error("Erreur de récupération des notifications", err);
+        setNotifications([]);
       }
     }
     fetchNotifications();

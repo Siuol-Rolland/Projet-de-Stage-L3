@@ -1,10 +1,9 @@
-// /api/students/quotas/live/route.ts
 "use server";
 
 import { PrismaClient } from "@/generated/prisma";
 import { createClient } from "@/utils/supabase/server";
 
-const prisma = new PrismaClient();
+const getPrisma = () => new PrismaClient();
 
 export async function GET() {
   const supabase = await createClient();
@@ -16,19 +15,26 @@ export async function GET() {
     return new Response("Unauthenticated", { status: 401 });
   }
 
+  let channelRealisation: ReturnType<typeof supabase.channel> | null = null;
+  let channelQuotas: ReturnType<typeof supabase.channel> | null = null;
+
   const stream = new ReadableStream({
     async start(controller) {
       const send = (data: any) =>
         controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
 
-      // Charger les quotas au début
-      const loadInitial = async () => {
-        const etu = await prisma.eTUDIANT.findUnique({
-          where: { user_id: user.id }
-        });
+      // Étudiant connecté
+      const prisma0 = getPrisma();
+      const etu = await prisma0.eTUDIANT.findUnique({
+        where: { user_id: user.id }
+      });
+      await prisma0.$disconnect();
 
-        if (!etu) return send({ error: "Étudiant non trouvé" });
+      if (!etu) return send({ error: "Étudiant non trouvé" });
 
+      // Fonction pour recharger les quotas
+      const loadQuotas = async () => {
+        const prisma = getPrisma();
         const quotas = await prisma.qUOTAS.findMany({
           where: {
             id_Dep: etu.id_Dep,
@@ -38,40 +44,48 @@ export async function GET() {
             sous_actes: true
           }
         });
+        await prisma.$disconnect();
 
         send({ quotas });
       };
 
-      await loadInitial();
+      // Charger au début
+      await loadQuotas();
 
-      // Prisma ne supporte pas encore les triggers natifs
-      // mais on peut faire du polling léger
-      let previousHash = "";
+      // Realtime listeners
+      channelRealisation = supabase
+        .channel("realtime-realisation")
+        .on("postgres_changes",
+          { event: "*", schema: "public", table: "REALISATION" },
+          async () => await loadQuotas()
+        )
+        .subscribe();
 
-      setInterval(async () => {
-        const etu = await prisma.eTUDIANT.findUnique({
-          where: { user_id: user.id }
-        });
+      channelQuotas = supabase
+        .channel("realtime-quotas")
+        .on("postgres_changes",
+          { event: "*", schema: "public", table: "QUOTAS" },
+          async () => await loadQuotas()
+        )
+        .subscribe();
 
-        if (!etu) return;
+      // Anti-timeout
+      controller.enqueue(": ping\n\n");
+      const interval = setInterval(() => {
+        controller.enqueue(": ping\n\n");
+      }, 20000);
 
-        const quotas = await prisma.qUOTAS.findMany({
-          where: {
-            id_Dep: etu.id_Dep,
-            Annee: etu.Annee_Et
-          },
-          include: {
-            sous_actes: true
-          }
-        });
+      // Cleanup
+      return () => {
+        clearInterval(interval);
+        if (channelRealisation) supabase.removeChannel(channelRealisation);
+        if (channelQuotas) supabase.removeChannel(channelQuotas);
+      };
+    },
 
-        const hash = JSON.stringify(quotas);
-
-        if (hash !== previousHash) {
-          previousHash = hash;
-          send({ quotas });
-        }
-      }, 3000); // refresh toutes les 3s
+    async cancel() {
+      if (channelRealisation) supabase.removeChannel(channelRealisation);
+      if (channelQuotas) supabase.removeChannel(channelQuotas);
     }
   });
 
