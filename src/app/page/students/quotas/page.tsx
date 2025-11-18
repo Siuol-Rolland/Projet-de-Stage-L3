@@ -16,19 +16,11 @@ export default function EtQuotasPage() {
   const [etudiant, setEtudiant] = useState<any>(null);
   const [quotas, setQuotas] = useState<any[]>([]);
   const [selectedActe, setSelectedActe] = useState<number | null>(null);
-
   const [realisations, setRealisations] = useState<any[]>([]);
-
-
-  // 📅 Dates
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
-  // ➕ Période de quota sélectionné
   const [dateDebut, setDateDebut] = useState<Date | null>(null);
   const [dateFin, setDateFin] = useState<Date | null>(null);
-
-  // 🔹 Modal
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [openModal, setOpenModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,47 +40,26 @@ export default function EtQuotasPage() {
 
   const today = new Date();
 
-  const filteredQuotas = quotas.filter((q) => q.Nombre > 0);
-
-
-  // 🔹 Charger étudiant
-  // useEffect(() => {
-  //   const load = async () => {
-  //     const etRes = await fetch("/api/students/me");
-  //     const et = await etRes.json();
-  //     setEtudiant(et);
-  //   };
-  //   load();
-  // }, []);
+  // 🔹 Charger l'étudiant et ses quotas
   useEffect(() => {
-  const load = async () => {
-    try {
-      const etRes = await fetch("/api/students/me");
+    const load = async () => {
+      try {
+        const etRes = await fetch("/api/students/me");
+        if (!etRes.ok) return console.error("Erreur API:", etRes.status);
+        const et = await etRes.json();
+        setEtudiant(et);
 
-      if (!etRes.ok) {
-        const errText = await etRes.text();
-        console.error("Erreur API:", etRes.status, errText);
-        return;
+        const qRes = await fetch("/api/students/quotas");
+        if (!qRes.ok) return console.error("Erreur API quotas:", qRes.status);
+        const qData = await qRes.json();
+
+        // 🔹 Ne garder que les quotas avec Nombre > 0
+        setQuotas(qData.filter((q: any) => q.Nombre > 0));
+      } catch (error) {
+        console.error("Erreur réseau:", error);
       }
-
-      const et = await etRes.json();
-      setEtudiant(et);
-    } catch (error) {
-      console.error("Erreur réseau:", error);
-    }
-  };
-  load();
-}, []);
-
-
-  // 🔹 Écoute en temps réel des quotas
-  useEffect(() => {
-    const evt = new EventSource("/api/students/quotas/live");
-    evt.onmessage = (e) => {
-      const payload = JSON.parse(e.data);
-      if (payload.quotas) setQuotas(payload.quotas);
     };
-    return () => evt.close();
+    load();
   }, []);
 
   // 🔹 Sélection d’un quota
@@ -105,32 +76,33 @@ export default function EtQuotasPage() {
     }
   };
 
+  // 🔹 Récupérer réalisations
   useEffect(() => {
-  async function fetchRealisations() {
-    const res = await fetch("/api/students/quotas/realiser/me");
-    const data = await res.json();
-    setRealisations(data);
-  }
+    async function fetchRealisations() {
+      const res = await fetch("/api/students/quotas/realiser/me");
+      const data = await res.json();
+      setRealisations(data);
+    }
+    fetchRealisations();
+  }, []);
 
-  fetchRealisations();
-}, []);
-
-
-  const actes = filteredQuotas.flatMap((q) =>
+  // 🔹 Transformer les quotas pour affichage
+  const actes = quotas.flatMap((q) =>
     q.sous_actes.map((s: any) => ({
       acte: s.Desc_SActes,
       prix: s.Prix,
       nombre: q.Nombre,
       Date_Debut: q.Date_Debut,
       Date_Fin: q.Date_Fin,
+      ID_Quotas: q.ID_Quotas,
+      ID_SActes: s.ID_SActes,
     }))
-  );  
+  );
 
-  const totalActes = filteredQuotas.reduce((sum, q) => sum + q.Nombre, 0);
-
+  const totalActes = actes.reduce((sum, a) => sum + a.nombre, 0);
 
   if (!etudiant) return <p>Chargement...</p>;
-
+  
   // 🔹 Simulation de soumission
   const handleSoumettre = async () => {
     if (selectedActe === null) return;
@@ -364,3 +336,4 @@ export default function EtQuotasPage() {
     </main>
   );
 }
+

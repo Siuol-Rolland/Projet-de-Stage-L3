@@ -1,214 +1,104 @@
-// "use server";
-// import { NextResponse } from "next/server";
-// import { PrismaClient } from "@/generated/prisma";
-// import { createClient } from "@/utils/supabase/server";
-
-// const prisma = new PrismaClient();
-
-// export async function GET() {
-//   try {
-//     const data = await prisma.sOUS_ACTES.findMany({
-//       where: {
-//         Date_Realise: { not: null },   // Sous-acte déjà réalisé
-//         id_Etudiant: { not: null }     // Etudiant associé
-//       },
-//       include: {
-//         etudiant: true,   // Récupération des infos de l’étudiant
-//         acte: true        // Optionnel : pour afficher son acte
-//       }
-//     });
-
-//     return NextResponse.json(data);
-//   } catch (error: any ) {
-//     return NextResponse.json({ error: error.message }, { status: 500 });
-//   }
-// }
-
-// // export async function POST(req: Request) {
-// //   try {
-// //     const { sActeId, note } = await req.json();
-
-// //     // 1️⃣ Mettre à jour la note du sous-acte
-// //     const sousActe = await prisma.sOUS_ACTES.update({
-// //       where: { ID_SActes: sActeId },
-// //       data: { Note: note },
-// //       include: { etudiant: true, professeur: true },
-// //     });
-
-// //     if (!sousActe.etudiant) {
-// //       return NextResponse.json({ error: "Sous-acte sans étudiant associé." }, { status: 400 });
-// //     }
-
-// //     // 2️⃣ Créer la notification pour l’étudiant
-// //     await prisma.nOTIFICATION.create({
-// //       data: {
-// //         Message: `${sousActe.professeur?.Nom_Prof || "Le professeur"} a évalué votre sous-acte "${sousActe.Desc_SActes}".`,
-// //         Type: "EVALUATION",
-// //         id_Etudiant: sousActe.id_Etudiant,
-// //         Lu: false,
-// //       },
-// //     });
-
-// //     return NextResponse.json({ message: "Évaluation et notification créées avec succès." });
-// //   } catch (error: any) {
-// //     return NextResponse.json({ error: error.message }, { status: 500 });
-// //   }
-// // }
-
-// export async function POST(req: Request) {
-//   try {
-//     const { sActeId, note } = await req.json();
-
-//     // 🔹 Créer le client Supabase côté serveur
-//     const supabase = await createClient();
-//     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-//     if (sessionError || !session?.user) {
-//       return NextResponse.json({ error: "Utilisateur non connecté." }, { status: 401 });
-//     }
-
-//     const profUserId = session.user.id; // ici tu récupères le user_id du prof connecté
-
-//     // 1️⃣ Récupérer le professeur connecté
-//     const professeur = await prisma.pROFESSEURS.findUnique({
-//       where: { user_id: profUserId },
-//     });
-//     if (!professeur) {
-//       return NextResponse.json({ error: "Professeur non trouvé." }, { status: 404 });
-//     }
-
-//     // 2️⃣ Mettre à jour la note et lier le professeur
-//     const sousActe = await prisma.sOUS_ACTES.update({
-//       where: { ID_SActes: sActeId },
-//       data: { 
-//         Note: note,
-//         id_Prof: professeur.ID_Prof
-//       },
-//       include: { etudiant: true },
-//     });
-
-//     if (!sousActe.etudiant) {
-//       return NextResponse.json({ error: "Sous-acte sans étudiant associé." }, { status: 400 });
-//     }
-
-//     // 3️⃣ Créer la notification pour l’étudiant
-//     await prisma.nOTIFICATION.create({
-//       data: {
-//         Message: `${professeur.Nom_Prof} a évalué le sous-acte "${sousActe.Desc_SActes}".`,
-//         Type: "EVALUATION",
-//         id_Etudiant: sousActe.id_Etudiant,
-//         id_Prof: professeur.ID_Prof,
-//         Lu: false,
-//       },
-//     });
-
-//     return NextResponse.json({ message: "Évaluation et notification créées avec succès." });
-//   } catch (error: any) {
-//     return NextResponse.json({ error: error.message }, { status: 500 });
-//   }
-// }
-
 "use server";
-import { NextResponse } from "next/server";
+
 import { PrismaClient } from "@/generated/prisma";
 import { createClient } from "@/utils/supabase/server";
 
 const prisma = new PrismaClient();
 
 export async function GET() {
-  try {
-    // Récupérer toutes les réalisations non évaluées
-    const data = await prisma.rEALISATION.findMany({
-      where: {
-        Note: null, // Sous-acte non évalué
+  // Récupère tous les étudiants avec au moins une réalisation
+  const students = await prisma.eTUDIANT.findMany({
+    where: {
+      realisations: {
+        some: {}, // au moins une réalisation
       },
-      include: {
-        etudiant: true,     // infos de l'étudiant
-        sousActe: {
-          include: { acte: true }, // infos de l'acte
+    },
+    include: {
+      departement: true,
+      realisations: {
+        select: {
+          ID_Realisation: true,
+          Note: true,
+          id_SActes: true,
+          sousActe: {
+            select: {
+              Desc_SActes: true,
+            },
+          },
         },
-        professeur: true,
       },
-    });
+    },
+  });
 
-    // Mapper les données pour le front
-    const response = data.map((r) => ({
-      ID_SActes: r.sousActe.ID_SActes,
-      Desc_SActes: r.sousActe.Desc_SActes,
-      Date_Realise: r.Date_Realise,
-      Note: r.Note ?? undefined,
-      etudiant: r.etudiant
-        ? { FullName_Et: r.etudiant.FullName_Et, Email_Et: r.etudiant.Email_Et }
-        : null,
-      acte: r.sousActe.acte ? { Desc_Actes: r.sousActe.acte.Desc_Actes } : undefined,
-    }));
-
-    return NextResponse.json(response);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  return new Response(JSON.stringify(students), {
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 export async function POST(req: Request) {
   try {
-    const { sActeId, note } = await req.json();
+    const { realisationId, note } = await req.json();
 
-    // 🔹 Créer le client Supabase côté serveur
+    // 🔹 1️⃣ Récupérer l'utilisateur connecté via Supabase
     const supabase = await createClient();
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      return NextResponse.json({ error: "Utilisateur non connecté." }, { status: 401 });
+    if (!user) {
+      return new Response("Non authentifié", { status: 401 });
     }
 
-    const profUserId = session.user.id;
-
-    // 1️⃣ Récupérer le professeur connecté
+    // 🔹 2️⃣ Récupérer le professeur correspondant à l’utilisateur
     const professeur = await prisma.pROFESSEURS.findUnique({
-      where: { user_id: profUserId },
+      where: { user_id: user.id },
     });
+
     if (!professeur) {
-      return NextResponse.json({ error: "Professeur non trouvé." }, { status: 404 });
+      return new Response("Professeur introuvable", { status: 404 });
     }
 
-    // 2️⃣ Récupérer la réalisation correspondant au sous-acte
-    const realisation = await prisma.rEALISATION.findFirst({
-      where: { id_SActes: sActeId },
+    // 🔹 Vérifier si la réalisation existe
+    const realisation = await prisma.rEALISATION.findUnique({
+      where: { ID_Realisation: realisationId },
       include: { etudiant: true, sousActe: true },
     });
 
-    if (!realisation || !realisation.etudiant) {
-      return NextResponse.json({ error: "Sous-acte ou étudiant introuvable." }, { status: 400 });
+    if (!realisation) {
+      return new Response("Réalisation introuvable", { status: 404 });
     }
 
-    // 3️⃣ Mettre à jour la note et lier le professeur
+    // 🔹 Vérifier si déjà évaluée
+    if (realisation.Note !== null) {
+      return new Response("Cette réalisation est déjà évaluée", { status: 400 });
+    }
+
+    // 🔹 Mise à jour de la note et lien avec le professeur
     const updated = await prisma.rEALISATION.update({
-      where: { ID_Realisation: realisation.ID_Realisation },
+      where: { ID_Realisation: realisationId },
       data: {
         Note: note,
-        id_Prof: professeur.ID_Prof,
         Statut_Valide: true,
+        id_Prof: professeur.ID_Prof,
       },
       include: { etudiant: true, sousActe: true },
     });
 
-    // 4️⃣ Créer la notification pour l’étudiant
+    // 🔹 3️⃣ Création de la notification pour l'étudiant
     await prisma.nOTIFICATION.create({
       data: {
-        Message: `${professeur.Nom_Prof} a évalué le sous-acte "${updated.sousActe.Desc_SActes}".`,
+        Message: `Votre sous-acte "${updated.sousActe.Desc_SActes}" a été évalué par ${professeur.Nom_Prof}.`,
         Type: "EVALUATION",
-        id_Etudiant: updated.id_Etudiant,
-        id_Prof: professeur.ID_Prof,
-        Lu: false,
+        id_Etudiant: updated.etudiant.ID_Etudiant,
         id_Realisation: updated.ID_Realisation,
+        id_SActes: updated.sousActe.ID_SActes,
+        // id_Prof: professeur.ID_Prof,
+        Lu: false,
       },
     });
 
-    return NextResponse.json({ message: "Évaluation et notification créées avec succès." });
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+    return new Response(`Erreur serveur: ${error.message}`, { status: 500 });
   }
 }

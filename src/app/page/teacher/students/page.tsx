@@ -1,229 +1,188 @@
-// import React from 'react'
-
-// export default function StudentEvaluationPage() {
-//   return (
-//     <div>StudentEvaluationPage</div>
-//   )
-// }
-
-// "use client";
-
-// import React, { useEffect, useState } from "react";
-
-// type SousActeRealise = {
-//   ID_SActes: number;
-//   Desc_SActes: string;
-//   Date_Realise: string;
-//   etudiant: {
-//     FullName_Et: string;
-//     Email_Et: string;
-//   } | null;
-//   acte?: any;
-// };
-
-// export default function StudentEvaluationPage() {
-//   const [sousActes, setSousActes] = useState<SousActeRealise[]>([]);
-
-//   useEffect(() => {
-//     async function fetchData() {
-//       const res = await fetch("/api/teacher/evaluation");
-//       const data = await res.json();
-//       setSousActes(data);
-//     }
-
-//     fetchData();
-//   }, []);
-
-//   return (
-//     <div className="p-6">
-//       <h1 className="text-2xl font-semibold mb-4">
-//         Étudiants qui ont réalisé un sous-acte
-//       </h1>
-
-//       <div className="space-y-4">
-//         {sousActes.length === 0 && (
-//           <p>Aucun sous-acte réalisé pour le moment.</p>
-//         )}
-
-//         {sousActes.map((item) => (
-//           <div
-//             key={item.ID_SActes}
-//             className="p-4 border rounded-lg bg-white shadow"
-//           >
-//             <p>
-//               <strong>Étudiant :</strong> {item.etudiant?.FullName_Et}
-//             </p>
-
-//             <p>
-//               <strong>Email :</strong> {item.etudiant?.Email_Et}
-//             </p>
-
-//             <p>
-//               <strong>Sous-acte :</strong> {item.Desc_SActes}
-//             </p>
-
-//             <p>
-//               <strong>Date de réalisation :</strong>{" "}
-//               {new Date(item.Date_Realise).toLocaleString()}
-//             </p>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
 
-type SousActeRealise = {
-  ID_SActes: number;
-  Desc_SActes: string;
-  Date_Realise: string;
-  Note?: number;
-  etudiant: {
-    FullName_Et: string;
-    Email_Et: string;
-  } | null;
-  acte?: {
-    Desc_Actes: string;
+interface RealisationItem {
+  ID_Realisation: number;
+  Note?: number | null;
+  sousActe: {
+    Desc_SActes: string;
   };
-};
+}
+
+interface Student {
+  ID_Etudiant: number;
+  FullName_Et: string;
+  Annee_Et: string;
+  Photo_Et?: string;
+  departement: {
+    Nom_Dep: string;
+  };
+  realisations: RealisationItem[];
+}
 
 export default function StudentEvaluationPage() {
-  const [sousActes, setSousActes] = useState<SousActeRealise[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSActe, setSelectedSActe] = useState<SousActeRealise | null>(null);
-  const [noteInput, setNoteInput] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(false); // 🔹 état de chargement
+  const [students, setStudents] = useState<Student[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const [currentRealisation, setCurrentRealisation] = useState<RealisationItem | null>(null);
+  const [note, setNote] = useState<number | "">("");
+  const [isLoading, setIsLoading] = useState(false);  // ⬅️ NEW
 
-  // 🔹 Charger les sous-actes réalisés
+  // Charger données
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/teacher/evaluation");
-        const data = await res.json();
-        setSousActes(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    fetchData();
+    fetch("/api/teacher/evaluation")
+      .then(res => res.json())
+      .then(data => setStudents(data));
   }, []);
 
-  function openModal(sActe: SousActeRealise) {
-    setSelectedSActe(sActe);
-    setNoteInput(sActe.Note || 0);
-    setIsModalOpen(true);
-  }
+  // Envoyer évaluation
+  const handleSubmit = async () => {
+    if (!currentRealisation || note === "") return;
 
-  // 🔹 Envoyer l’évaluation
- async function submitEvaluation() {
-  if (!selectedSActe) return;
+    setIsLoading(true);  // ⬅️ NEW
 
-  setIsLoading(true);
-
-  try {
     const res = await fetch("/api/teacher/evaluation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        sActeId: selectedSActe.ID_SActes, 
-        note: noteInput
+      body: JSON.stringify({
+        realisationId: currentRealisation.ID_Realisation,
+        note: Number(note),
       }),
     });
 
-    const data = await res.json();
-    setIsLoading(false);
+    setIsLoading(false); // ⬅️ NEW
 
     if (res.ok) {
-      setSousActes((prev) =>
-        prev.map((s) =>
-          s.ID_SActes === selectedSActe.ID_SActes ? { ...s, Note: noteInput } : s
-        )
-      );
-      setIsModalOpen(false);
+      setModalOpen(false);
 
       Swal.fire({
         icon: "success",
-        title: "Évaluation réussie",
-        text: "L'évaluation du sous-acte a été enregistrée et une notification a été envoyée à l'étudiant.",
+        title: "Évaluation réussie !",
+        text: "L’étudiant a été notifié de l’évaluation de son sous-acte.",
+        timer: 2500,
+        showConfirmButton: false,
       });
-    } else {
-      Swal.fire({ icon: "error", title: "Erreur", text: data.error || "Une erreur est survenue." });
-    }
-  } catch (err) {
-    setIsLoading(false);
-    console.error(err);
-    Swal.fire({ icon: "error", title: "Erreur", text: "Une erreur est survenue lors de l'évaluation." });
-  }
-}
-  
 
+      // Recharger liste pour mettre note à jour
+      fetch("/api/teacher/evaluation")
+        .then(r => r.json())
+        .then(d => setStudents(d));
+
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: "Impossible d’envoyer l’évaluation.",
+      });
+    }
+  };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">
-        Étudiants qui ont réalisé un sous-acte
-      </h1>
+    <div className="flex flex-wrap justify-center gap-6 p-6">
+      {students.map(student => {
+        const isCurrentSelected = currentStudent?.ID_Etudiant === student.ID_Etudiant;
 
-      <div className="space-y-4">
-        {sousActes.length === 0 && <p>Aucun sous-acte réalisé pour le moment.</p>}
+        return (
+          <div key={student.ID_Etudiant} className="w-64 bg-white text-gray-800 rounded-lg shadow-md flex flex-col items-center p-4">
+            <img
+              src={student.Photo_Et || "https://via.placeholder.com/100"}
+              alt={student.FullName_Et}
+              className="w-24 h-24 rounded-full object-cover mb-4"
+            />
+            <h2 className="text-lg font-bold">{student.FullName_Et}</h2>
+            <p className="text-sm mb-2 text-gray-500">
+              {student.departement.Nom_Dep} • {student.Annee_Et}
+            </p>
 
-        {sousActes.map((item) => (
-          <div key={item.ID_SActes} className="p-4 border rounded-lg bg-white shadow">
-            <p><strong>Étudiant :</strong> {item.etudiant?.FullName_Et}</p>
-            <p><strong>Email :</strong> {item.etudiant?.Email_Et}</p>
-            <p><strong>Sous-acte :</strong> {item.Desc_SActes}</p>
-            {item.acte && <p><strong>Acte :</strong> {item.acte.Desc_Actes}</p>}
-            <p><strong>Date de réalisation :</strong> {new Date(item.Date_Realise).toLocaleString()}</p>
-            <p><strong>Note :</strong> {item.Note ?? "Non évalué"}</p>
-            <button
-              className="mt-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-              onClick={() => openModal(item)}
-            >
-              Évaluer
-            </button>
+            <div className="w-full border border-gray-300 rounded-md p-3 flex-1">
+              <h3 className="text-sm font-semibold mb-2 text-center">Quotas réalisés</h3>
+
+              {student.realisations.map(realisation => {
+                const isEvaluated = realisation.Note !== null && realisation.Note !== undefined;
+
+                return (
+                  <div
+                    key={realisation.ID_Realisation}
+                    className={`flex justify-between items-center w-full border-b py-2 
+                      ${!isEvaluated ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                    onClick={() => {
+                      if (!isEvaluated) {
+                        setCurrentStudent(student);
+                        setCurrentRealisation(realisation);
+                      }
+                    }}
+                  >
+                    <span>{realisation.sousActe.Desc_SActes}</span>
+                    <span className="font-semibold text-blue-600 w-12 text-right">
+                      {isEvaluated ? realisation.Note : "-"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bouton Évaluer */}
+            <div className="w-full flex justify-end mt-3">
+              <Button
+                onClick={() => setModalOpen(true)}
+                disabled={!currentRealisation || !isCurrentSelected}
+              >
+                Évaluer
+              </Button>
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
 
-      {/* 🔹 Modal pour évaluer */}
-      {isModalOpen && selectedSActe && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-80 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Évaluer le sous-acte</h2>
-            <p className="mb-2"><strong>Étudiant :</strong> {selectedSActe.etudiant?.FullName_Et}</p>
-            <p className="mb-2"><strong>Sous-acte :</strong> {selectedSActe.Desc_SActes}</p>
-            {selectedSActe.acte && <p className="mb-2"><strong>Acte :</strong> {selectedSActe.acte.Desc_Actes}</p>}
+      {/* MODAL */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              Évaluer {currentStudent?.FullName_Et}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="mb-4">
+            <p className="mb-2 text-sm text-gray-600">
+              Sous-acte : <strong>{currentRealisation?.sousActe.Desc_SActes}</strong>
+            </p>
+
             <input
               type="number"
               min={0}
               max={20}
-              value={noteInput}
-              onChange={(e) => setNoteInput(Number(e.target.value))}
-              className="w-full border rounded px-2 py-1 mb-4"
-              placeholder="Entrez la note (0-20)"
+              value={note}
+              onChange={(e) => setNote(Number(e.target.value))}
+              className="border border-gray-300 rounded-md p-2 w-full"
+              placeholder="Entrer la note (0-20)"
             />
-            <div className="flex justify-end gap-2">
-              <button
-                className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400"
-                onClick={() => setIsModalOpen(false)}
-              >
-                Annuler
-              </button>
-              <button
-                className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={submitEvaluation}
-              >
-                {isLoading ? "Évaluation en cours..." : "Valider"} {/* 🔹 bouton dynamique */}
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Annuler
+            </Button>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading || note === "" || note < 0 || note > 20}
+            >
+              {isLoading ? "Évaluation en cours..." : "Valider"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

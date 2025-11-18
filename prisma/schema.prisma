@@ -9,205 +9,140 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum TypeNotification {
-  REALISATION   // Étudiant réalise un acte → notification pour le professeur
-  EVALUATION    // Professeur évalue un acte → notification pour l’étudiant
-  PAIEMENT      // Étudiant effectue un paiement → notification pour l’admin
-  VALIDATION    // Admin valide un paiement → notification pour l’étudiant
-}
-
 model ADMINISTRATEUR {
-  ID_Admin      Int       @id @default(autoincrement())
+  ID_Admin      Int            @id @default(autoincrement())
   Nom_Admin     String
-  Email_Admin   String    @unique
+  Email_Admin   String         @unique
   MotPass_Admin String
   id_Quotas     Int?
   id_Paie       Int?
-
-  user_id       String    @unique
-
-  quotas QUOTAS[]
-  paiements PAIEMENT[]
-
-  notifications NOTIFICATION[]  @relation("Notif_Admin")
+  user_id       String         @unique
+  notifications NOTIFICATION[] @relation("Notif_Admin")
+  paiements     PAIEMENT[]
+  quotas        QUOTAS[]
 }
 
 model ETUDIANT {
-  ID_Etudiant Int         @id @default(autoincrement())
-  user_id     String      @unique 
-  FullName_Et String
-  Email_Et    String      @unique
-  Annee_Et    String
-  Dette       Float?
-  MotPass_Et  String
-  Photo_Et    String?
-  
-  id_Dep      Int
-  departement DEPARTEMENT @relation(fields: [id_Dep], references: [ID_Dep])
-
-  paiements PAIEMENT[]
-  // sousActes SOUS_ACTES[]
-
+  ID_Etudiant   Int            @id @default(autoincrement())
+  user_id       String         @unique
+  FullName_Et   String
+  Email_Et      String         @unique
+  Annee_Et      String
+  Dette         Float?
+  MotPass_Et    String
+  Photo_Et      String?
+  id_Dep        Int
+  departement   DEPARTEMENT    @relation(fields: [id_Dep], references: [ID_Dep])
   notifications NOTIFICATION[] @relation("Notif_Etudiant")
-
-  realisations REALISATION[]
-
+  paiements     PAIEMENT[]
+  realisations  REALISATION[]
 }
 
 model DEPARTEMENT {
-  ID_Dep    Int        @id @default(autoincrement())
-  Nom_Dep   String
-
-  actes     ACTES[]
-  etudiants ETUDIANT[]
-  quotas    QUOTAS[]
-
+  ID_Dep      Int           @id @default(autoincrement())
+  Nom_Dep     String
+  actes       ACTES[]
+  etudiants   ETUDIANT[]
+  quotas      QUOTAS[]
   professeurs PROFESSEURS[] @relation("Prof_Dep")
 }
 
 model ACTES {
   ID_Actes    Int          @id @default(autoincrement())
   Desc_Actes  String
-
   id_Dep      Int
   departement DEPARTEMENT  @relation(fields: [id_Dep], references: [ID_Dep])
-
-  sous_actes SOUS_ACTES[]
+  sous_actes  SOUS_ACTES[]
 }
 
 model SOUS_ACTES {
-  ID_SActes     Int           @id @default(autoincrement())
+  ID_SActes     Int            @id @default(autoincrement())
   Desc_SActes   String
   Prix          Float
-  // Note          Float?
-  // Date_Realise  DateTime?
-  // Statut_Valide Boolean
-
-
   id_Actes      Int
-  acte          ACTES         @relation(fields: [id_Actes], references: [ID_Actes])
-  
-  // id_Etudiant Int?
-  // etudiant ETUDIANT? @relation(fields: [id_Etudiant], references: [ID_Etudiant])
-
-  // id_Prof Int?
-  // professeur PROFESSEURS? @relation(fields: [id_Prof], references: [ID_Prof])
- 
-  quotas        QUOTAS[]      @relation("Attribuer")
-
-  notifications  NOTIFICATION[] @relation("Notif_SousActe")
-
-  realisations REALISATION[]
-
+  notifications NOTIFICATION[] @relation("Notif_SousActe")
+  realisations  REALISATION[]
+  acte          ACTES          @relation(fields: [id_Actes], references: [ID_Actes])
+  quotas        QUOTAS[]       @relation("Attribuer")
 }
 
 model PROFESSEURS {
-  ID_Prof      Int         @id @default(autoincrement())
-  user_id      String      @unique
-  Nom_Prof     String
-  Email_Prof   String      @unique
-  MotPass_Prof String
-
-  departements DEPARTEMENT[] @relation("Prof_Dep")
-
-  // sousActes SOUS_ACTES[]
-
-  notifications NOTIFICATION[]  @relation("Notif_Prof")
-
-  realisations REALISATION[]
-
+  ID_Prof       Int            @id @default(autoincrement())
+  user_id       String         @unique
+  Nom_Prof      String
+  Email_Prof    String         @unique
+  MotPass_Prof  String
+  notifications NOTIFICATION[] @relation("Notif_Prof")
+  realisations  REALISATION[]
+  departements  DEPARTEMENT[]  @relation("Prof_Dep")
 }
 
 model QUOTAS {
-  ID_Quotas      Int              @id @default(autoincrement())
-  Annee          String
-  Nombre         Int
-  Date_Debut     DateTime
-  Date_Fin       DateTime
-
-  id_Dep         Int
-  departement    DEPARTEMENT      @relation(fields: [id_Dep], references: [ID_Dep])
-
-  id_Admin       Int
-  admin          ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
-  
-  sous_actes     SOUS_ACTES[]     @relation("Attribuer")
+  ID_Quotas   Int            @id @default(autoincrement())
+  Annee       String
+  Nombre      Int
+  Date_Debut  DateTime
+  Date_Fin    DateTime
+  id_Dep      Int
+  id_Admin    Int
+  admin       ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
+  departement DEPARTEMENT    @relation(fields: [id_Dep], references: [ID_Dep])
+  sous_actes  SOUS_ACTES[]   @relation("Attribuer")
 }
 
 model PAIEMENT {
-  ID_Paie        Int              @id @default(autoincrement())
-  Montant        Float
-  Type_Paie      String
-  Date_Paie      DateTime
-  Statut_Paie    String
-
-  id_Admin Int
-  admin ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
-
-  id_Etudiant Int
-  etudiant ETUDIANT @relation(fields: [id_Etudiant], references: [ID_Etudiant])
-
-  notifications NOTIFICATION[]  @relation("Notif_Paiement")
-
-  realisations REALISATION[]
-
+  ID_Paie       Int            @id @default(autoincrement())
+  Montant       Float
+  Type_Paie     String
+  Date_Paie     DateTime
+  Statut_Paie   String
+  id_Admin      Int
+  id_Etudiant   Int
+  notifications NOTIFICATION[] @relation("Notif_Paiement")
+  admin         ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
+  etudiant      ETUDIANT       @relation(fields: [id_Etudiant], references: [ID_Etudiant])
+  realisations  REALISATION[]
 }
 
 model NOTIFICATION {
-  ID_Notification Int             @id @default(autoincrement())
+  ID_Notification Int              @id @default(autoincrement())
   Message         String
   Type            TypeNotification
-  Date_Envoi      DateTime        @default(now())
-  Lu              Boolean         @default(false)
-
-  // Nouvelle relation vers realisation
-  id_Realisation  Int?
-  realisation     REALISATION? @relation("Notif_Realisation", fields: [id_Realisation], references: [ID_Realisation])
-
-
-  // Relations facultatives vers un sous-acte ou paiement
+  Date_Envoi      DateTime         @default(now())
+  Lu              Boolean          @default(false)
   id_SActes       Int?
-  sous_acte       SOUS_ACTES?     @relation("Notif_SousActe", fields: [id_SActes], references: [ID_SActes])
-
   id_Paie         Int?
-  paiement        PAIEMENT?       @relation("Notif_Paiement", fields: [id_Paie], references: [ID_Paie])
-
-  // Utilisateur cible (étudiant, prof, admin)
   id_Etudiant     Int?
-  etudiant        ETUDIANT?       @relation("Notif_Etudiant", fields: [id_Etudiant], references: [ID_Etudiant])
-
   id_Prof         Int?
-  professeur      PROFESSEURS?    @relation("Notif_Prof", fields: [id_Prof], references: [ID_Prof])
-
   id_Admin        Int?
-  admin           ADMINISTRATEUR? @relation("Notif_Admin", fields: [id_Admin], references: [ID_Admin])
+  id_Realisation  Int?
+  admin           ADMINISTRATEUR?  @relation("Notif_Admin", fields: [id_Admin], references: [ID_Admin])
+  etudiant        ETUDIANT?        @relation("Notif_Etudiant", fields: [id_Etudiant], references: [ID_Etudiant])
+  paiement        PAIEMENT?        @relation("Notif_Paiement", fields: [id_Paie], references: [ID_Paie])
+  professeur      PROFESSEURS?     @relation("Notif_Prof", fields: [id_Prof], references: [ID_Prof])
+  realisation     REALISATION?     @relation("Notif_Realisation", fields: [id_Realisation], references: [ID_Realisation])
+  sous_acte       SOUS_ACTES?      @relation("Notif_SousActe", fields: [id_SActes], references: [ID_SActes])
 }
 
 model REALISATION {
-  ID_Realisation Int       @id @default(autoincrement())
+  ID_Realisation Int            @id @default(autoincrement())
   Date_Realise   DateTime
   Note           Float?
-  Statut_Valide  Boolean   @default(false)
-
-  // Relation vers le sous-acte (définition)
+  Statut_Valide  Boolean        @default(false)
   id_SActes      Int
-  sousActe       SOUS_ACTES @relation(fields: [id_SActes], references: [ID_SActes])
-
-  // Étudiant qui a réalisé l’acte
   id_Etudiant    Int
-  etudiant       ETUDIANT   @relation(fields: [id_Etudiant], references: [ID_Etudiant])
-
-  // Professeur qui valide l’acte
   id_Prof        Int?
-  professeur     PROFESSEURS? @relation(fields: [id_Prof], references: [ID_Prof])
-
-  // Paiement associé (si l'acte implique un paiement)
   id_Paie        Int?
-  paiement       PAIEMENT?  @relation(fields: [id_Paie], references: [ID_Paie])
-
-  // Notifications générées par cette réalisation
   notifications  NOTIFICATION[] @relation("Notif_Realisation")
+  etudiant       ETUDIANT       @relation(fields: [id_Etudiant], references: [ID_Etudiant])
+  paiement       PAIEMENT?      @relation(fields: [id_Paie], references: [ID_Paie])
+  professeur     PROFESSEURS?   @relation(fields: [id_Prof], references: [ID_Prof])
+  sousActe       SOUS_ACTES     @relation(fields: [id_SActes], references: [ID_SActes])
 }
 
-
-
+enum TypeNotification {
+  REALISATION
+  EVALUATION
+  PAIEMENT
+  VALIDATION
+}
