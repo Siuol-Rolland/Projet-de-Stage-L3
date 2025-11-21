@@ -20,6 +20,7 @@ model ADMINISTRATEUR {
   notifications NOTIFICATION[] @relation("Notif_Admin")
   paiements     PAIEMENT[]
   quotas        QUOTAS[]
+  historique        HISTORIQUE_PAIEMENT[]
 }
 
 model ETUDIANT {
@@ -91,17 +92,18 @@ model QUOTAS {
 }
 
 model PAIEMENT {
-  ID_Paie       Int            @id @default(autoincrement())
-  Montant       Float
-  Type_Paie     String
-  Date_Paie     DateTime
-  Statut_Paie   String
-  id_Admin      Int
-  id_Etudiant   Int
-  notifications NOTIFICATION[] @relation("Notif_Paiement")
-  admin         ADMINISTRATEUR @relation(fields: [id_Admin], references: [ID_Admin])
-  etudiant      ETUDIANT       @relation(fields: [id_Etudiant], references: [ID_Etudiant])
-  realisations  REALISATION[]
+  ID_Paie           Int            @id @default(autoincrement())
+  Montant           Float
+  Montant_Restant   Float?
+  Date_Paie         DateTime
+  Statut_Paie       StatutPaiement
+  id_Admin          Int?
+  id_Etudiant       Int
+  notifications     NOTIFICATION[] @relation("Notif_Paiement")
+  admin             ADMINISTRATEUR? @relation(fields: [id_Admin], references: [ID_Admin])
+  etudiant          ETUDIANT       @relation(fields: [id_Etudiant], references: [ID_Etudiant])
+  realisations      REALISATION[]
+  historique        HISTORIQUE_PAIEMENT[]
 }
 
 model NOTIFICATION {
@@ -140,9 +142,34 @@ model REALISATION {
   sousActe       SOUS_ACTES     @relation(fields: [id_SActes], references: [ID_SActes])
 }
 
+model HISTORIQUE_PAIEMENT {
+  ID_Hist      Int            @id @default(autoincrement())
+  Action       String         // "VALIDATION", "ANNULATION"
+  AncienStatut StatutPaiement
+  NouveauStatut StatutPaiement
+  Montant      Float?
+  Montant_Restant Float?
+  Date_Action  DateTime       @default(now())
+
+  id_Paie      Int
+  paiement     PAIEMENT       @relation(fields: [id_Paie], references: [ID_Paie])
+
+  id_Admin     Int?
+  admin        ADMINISTRATEUR? @relation(fields: [id_Admin], references: [ID_Admin])
+}
+
+
 enum TypeNotification {
   REALISATION
   EVALUATION
   PAIEMENT
   VALIDATION
 }
+
+enum StatutPaiement {
+  EN_ATTENTE
+  PARTIEL
+  TOTAL
+  ANNULE
+}
+

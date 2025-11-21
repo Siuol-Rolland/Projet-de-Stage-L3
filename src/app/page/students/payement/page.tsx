@@ -6,196 +6,430 @@
 //   )
 // }
 
-'use client'; // Important si tu utilises Next.js App Router et des hooks/interactivité
+// "use client";
 
-import React, { useState, FormEvent } from 'react';
+// import React, { useEffect, useState } from "react";
+// import { Ellipsis } from "lucide-react";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogFooter,
+//   DialogTrigger,
+// } from "@/components/ui/dialog";
+// import { Button } from "@/components/ui/button";
+// import Swal from "sweetalert2";
 
-// Définition de l'interface pour les données du formulaire (bonne pratique TypeScript)
-interface PaymentFormData {
-  cardNumber: string;
-  cardHolder: string;
-  expiryDate: string;
-  cvv: string;
-  amount: number;
+// interface Paiement {
+//   ID_Realisation: number;
+//   Note: number | null;
+//   sousActe?: {
+//     Desc_SActes: string;
+//     Prix: number;
+//   };
+//   paiement?: {
+//     Montant: number;
+//     Statut_Paie: string;
+//     Date_Paie: string;
+//   };
+// }
+
+// export default function EtPayementPage() {
+//   const [paiements, setPaiements] = useState<Paiement[]>([]);
+//   const [openDialog, setOpenDialog] = useState(false);
+//   const [selectedPaiement, setSelectedPaiement] = useState<Paiement | null>(null);
+//   const [montant, setMontant] = useState(0);
+//   const [isLoading, setIsLoading] = useState(false);
+
+//   useEffect(() => {
+//     fetch("/api/students/payement")
+//       .then((res) => res.json())
+//       .then((data: Paiement[]) => {
+//         const evalues = data.filter((p) => p.Note !== null);
+//         setPaiements(evalues);
+//       });
+//   }, []);
+
+//   const openPayerDialog = (p: Paiement) => {
+//     setSelectedPaiement(p);
+//     // setMontant(p.sousActe?.Prix || 0);
+//     setOpenDialog(true);
+//   };
+
+//   const handleSubmitPaiement = async () => {
+//     if (!selectedPaiement) return;
+
+//     setIsLoading(true);
+//     try {
+//       const res = await fetch("/api/students/payement", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           ID_Realisation: selectedPaiement.ID_Realisation,
+//           Montant: montant,   // <-- correction ici
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         setPaiements(prev =>
+//           prev.map(p =>
+//             p.ID_Realisation === selectedPaiement.ID_Realisation
+//               ? {
+//                   ...p,
+//                   paiement: {
+//                     Montant: (p.paiement?.Montant || 0) + montant, // <-- cumul progressif
+//                     Statut_Paie:
+//                       (p.paiement?.Montant || 0) + montant >= p.sousActe!.Prix
+//                         ? "TOTAL"
+//                         : "PARTIEL",
+//                     Date_Paie: new Date().toISOString(),
+//                   },
+//                 }
+//               : p
+//           )
+//         );
+//         setOpenDialog(false);
+//         Swal.fire({
+//           icon: "success",
+//           title: "Paiement effectué !",
+//           text: data.message,
+//           confirmButtonText: "OK",
+//         });
+//       } else {
+//         Swal.fire({ icon: "error", title: "Erreur", text: data.message });
+//       }
+//     } catch (error) {
+//       console.error(error);
+//       Swal.fire({ icon: "error", title: "Erreur", text: "Une erreur est survenue lors du paiement" });
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+
+//   return (
+//     <div className="p-6">
+//       <h1 className="text-xl font-semibold mb-4">Sous-actes réalisés & Évaluation</h1>
+
+//       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+//         <table className="min-w-full text-left">
+//           <thead className="bg-gray-100 border-b">
+//             <tr>
+//               <th className="px-4 py-3 font-medium text-gray-700">Sous-actes</th>
+//               <th className="px-4 py-3 font-medium text-gray-700">Prix unitaire</th>
+//               <th className="px-4 py-3 font-medium text-gray-700">Montant payé</th>
+//               <th className="px-4 py-3 font-medium text-gray-700">Note</th>
+//               <th className="px-4 py-3 font-medium text-gray-700">Date paiement</th>
+//               <th className="px-4 py-3 font-medium text-gray-700">Statut</th>
+//               <th className="px-4 py-3 font-medium text-gray-700 text-center">Actions</th>
+//             </tr>
+//           </thead>
+
+//           <tbody>
+//             {paiements.map((p) => (
+//               <tr key={p.ID_Realisation} className="border-b hover:bg-gray-50 transition">
+//                 <td className="px-4 py-3">{p.sousActe?.Desc_SActes}</td>
+//                 <td className="px-4 py-3">{p.sousActe?.Prix} Ar</td>
+//                 <td className="px-4 py-3">{p.paiement ? `${p.paiement.Montant} Ar` : "—"}</td>
+//                 <td className="px-4 py-3">{p.Note}</td>
+//                 <td className="px-4 py-3">
+//                   {p.paiement ? new Date(p.paiement.Date_Paie).toLocaleDateString() : "—"}
+//                 </td>
+//                 <td className="px-4 py-3">{p.paiement?.Statut_Paie || "—"}</td>
+//                 <td className="px-4 py-3 text-center">
+//                   <DropdownMenu>
+//                     <DropdownMenuTrigger>
+//                       <Ellipsis className="cursor-pointer" />
+//                     </DropdownMenuTrigger>
+//                     <DropdownMenuContent>
+//                       <DropdownMenuItem onClick={() => openPayerDialog(p)}>Payer</DropdownMenuItem>
+//                       <DropdownMenuItem className="text-red-500">Supprimer</DropdownMenuItem>
+//                     </DropdownMenuContent>
+//                   </DropdownMenu>
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+
+//       {/* Dialog de paiement */}
+//       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+//         <DialogContent>
+//           <DialogHeader>
+//             <DialogTitle>Paiement du sous-acte</DialogTitle>
+//           </DialogHeader>
+
+//           <div className="space-y-4 mt-2">
+//             <div>
+//               <label className="block text-sm font-medium">Sous-acte</label>
+//               <input
+//                 type="text"
+//                 value={selectedPaiement?.sousActe?.Desc_SActes || ""}
+//                 disabled
+//                 className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium">Prix unitaire</label>
+//               <input
+//                 type="number"
+//                 value={selectedPaiement?.sousActe?.Prix || 0}
+//                 disabled
+//                 className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium">Montant</label>
+//               <input
+//                 type="number"
+//                 value={montant}
+//                 onChange={(e) => setMontant(Number(e.target.value))}
+//                 className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+//               />
+//             </div>
+//           </div>
+
+//           <DialogFooter className="mt-4">
+//             <Button onClick={handleSubmitPaiement} disabled={isLoading}>
+//               {isLoading ? "Paiement en cours..." : "Soumettre"}
+//             </Button>
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   );
+// }
+
+
+
+
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Ellipsis } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import Swal from "sweetalert2";
+
+interface Paiement {
+  ID_Realisation: number;
+  Montant_Restant: number;
+  Note?: number | null;
+  sousActe?: {
+    Desc_SActes: string;
+    Prix: number;
+  };
+  paiement?: {
+    Montant: number;
+    Statut_Paie: string;
+    Date_Paie: string;
+  };
 }
 
 export default function EtPayementPage() {
-  const [formData, setFormData] = useState<PaymentFormData>({
-    cardNumber: '',
-    cardHolder: '',
-    expiryDate: '',
-    cvv: '',
-    amount: 99.99, // Exemple de montant fixe
-  });
-
+  const [paiements, setPaiements] = useState<Paiement[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedPaiement, setSelectedPaiement] = useState<Paiement | null>(null);
+  const [montant, setMontant] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
 
-  // Gestion des changements dans les champs du formulaire
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    fetch("/api/students/payement")
+      .then((res) => res.json())
+      // .then((data: Paiement[]) => {
+      //   const evalues = data.filter((p) => p.Note !== null);
+      //   setPaiements(evalues);
+      // });
+      .then((data) => {
+      if (!Array.isArray(data)) {
+        console.error("Réponse invalide :", data);
+        return;
+      }
+
+      const evalues = data.filter((p) => p.Note !== null);
+      setPaiements(evalues);
+    })
+
+  }, []);
+
+  const openPayerDialog = (p: Paiement) => {
+    setSelectedPaiement(p);
+    // setMontant(p.sousActe?.Prix || 0);
+    setOpenDialog(true);
   };
 
-  // Gestion de la soumission du formulaire
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmitPaiement = async () => {
+    if (!selectedPaiement) return;
+
     setIsLoading(true);
-    setError(null);
-    setSuccess(false);
-
-    // --- LOGIQUE DE PAIEMENT SIMULÉE (À REMPLACER PAR TON APPEL API RÉEL) ---
-    console.log('Tentative de paiement avec les données:', formData);
-
     try {
-      // **Ici tu ferais l'appel à ton API backend qui communique avec un PSP (Stripe, PayPal, etc.)**
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simuler un délai réseau de 2s
+      const res = await fetch("/api/students/payement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ID_Realisation: selectedPaiement.ID_Realisation,
+          Montant: montant,   // <-- correction ici
+        }),
+      });
 
-      if (formData.cardNumber.startsWith('4')) { // Simple vérification pour simuler un succès/échec
-        setSuccess(true);
-        // Normalement, tu redirigerais l'utilisateur ici
+      const data = await res.json();
+
+      if (res.ok) {
+        setPaiements(prev =>
+          prev.map(p =>
+            p.ID_Realisation === selectedPaiement.ID_Realisation
+              ? {
+                  ...p,
+                  paiement: {
+                    Montant: (p.paiement?.Montant || 0) + montant, // <-- cumul progressif
+                    Statut_Paie:
+                      (p.paiement?.Montant || 0) + montant >= p.sousActe!.Prix
+                        ? "TOTAL"
+                        : "PARTIEL",
+                    Date_Paie: new Date().toISOString(),
+                  },
+                  Montant_Restant: p.sousActe!.Prix - ((p.paiement?.Montant || 0) + montant),
+                }
+              : p
+          )
+        );
+        setOpenDialog(false);
+        Swal.fire({
+          icon: "success",
+          title: "Paiement effectué !",
+          text: data.message,
+          confirmButtonText: "OK",
+        });
       } else {
-        setError('Paiement refusé. Veuillez vérifier les informations de votre carte.');
+        Swal.fire({ icon: "error", title: "Erreur", text: data.message });
       }
-    } catch (err) {
-      setError('Une erreur inattendue est survenue.');
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      Swal.fire({ icon: "error", title: "Erreur", text: "Une erreur est survenue lors du paiement" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- RENDU TAILWIND CSS ---
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white p-8 rounded-xl shadow-2xl">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
-          Finaliser votre Paiement 🛍️
-        </h1>
+    <div className="p-6">
+      <h1 className="text-xl font-semibold mb-4">Sous-actes réalisés & Évaluation</h1>
 
-        {/* Affichage du Montant */}
-        <div className="bg-indigo-50 p-4 rounded-lg mb-6 text-center">
-          <p className="text-sm font-medium text-indigo-700">Montant total à payer :</p>
-          <p className="text-4xl font-black text-indigo-900">
-            {formData.amount.toFixed(2)} €
-          </p>
-        </div>
+      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+        <table className="min-w-full text-left">
+          <thead className="bg-gray-100 border-b">
+            <tr>
+              <th className="px-4 py-3 font-medium text-gray-700">Sous-actes</th>
+              <th className="px-4 py-3 font-medium text-gray-700">Prix unitaire</th>
+              <th className="px-4 py-3 font-medium text-gray-700">Montant payé</th>
+              <th className="px-4 py-3 font-medium text-gray-700">Montant restant</th>
+              <th className="px-4 py-3 font-medium text-gray-700">Date paiement</th>
+              <th className="px-4 py-3 font-medium text-gray-700">Statut</th>
+              <th className="px-4 py-3 font-medium text-gray-700 text-center">Actions</th>
+            </tr>
+          </thead>
 
-        {/* Message d'Erreur ou de Succès */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span className="font-bold">Succès!</span> Votre paiement a été traité.
-          </div>
-        )}
+          <tbody>
+            {paiements.map((p) => (
+              <tr key={p.ID_Realisation} className="border-b hover:bg-gray-50 transition">
+                <td className="px-4 py-3">{p.sousActe?.Desc_SActes}</td>
+                <td className="px-4 py-3">{p.sousActe?.Prix} Ar</td>
+                <td className="px-4 py-3">{p.paiement ? `${p.paiement.Montant} Ar` : "—"}</td>
+                <td className="px-4 py-3">{p.Montant_Restant} Ar</td>
+                <td className="px-4 py-3">
+                  {p.paiement ? new Date(p.paiement.Date_Paie).toLocaleDateString() : "—"}
+                </td>
+                <td className="px-4 py-3">{p.paiement?.Statut_Paie || "—"}</td>
+                <td className="px-4 py-3 text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <Ellipsis className="cursor-pointer" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => openPayerDialog(p)}>Payer</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-500">Supprimer</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Formulaire de Paiement */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Numéro de Carte */}
-          <div>
-            <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
-              Numéro de Carte
-            </label>
-            <input
-              type="text"
-              name="cardNumber"
-              id="cardNumber"
-              value={formData.cardNumber}
-              onChange={handleChange}
-              placeholder="XXXX XXXX XXXX XXXX"
-              maxLength={19} // 16 chiffres + 3 espaces
-              required
-              disabled={isLoading || success}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-            />
-          </div>
+      {/* Dialog de paiement */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Paiement du sous-acte</DialogTitle>
+          </DialogHeader>
 
-          {/* Nom sur la Carte */}
-          <div>
-            <label htmlFor="cardHolder" className="block text-sm font-medium text-gray-700">
-              Nom sur la Carte
-            </label>
-            <input
-              type="text"
-              name="cardHolder"
-              id="cardHolder"
-              value={formData.cardHolder}
-              onChange={handleChange}
-              placeholder="JULES DUPONT"
-              required
-              disabled={isLoading || success}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-
-          <div className="flex space-x-4">
-            {/* Date d'Expiration */}
-            <div className="flex-1">
-              <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
-                Expiration (MM/AA)
-              </label>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="block text-sm font-medium">Sous-acte</label>
               <input
                 type="text"
-                name="expiryDate"
-                id="expiryDate"
-                value={formData.expiryDate}
-                onChange={handleChange}
-                placeholder="09/26"
-                maxLength={5}
-                required
-                disabled={isLoading || success}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500"
+                value={selectedPaiement?.sousActe?.Desc_SActes || ""}
+                disabled
+                className="mt-1 block w-full rounded-md border border-gray-300 p-2"
               />
             </div>
 
-            {/* CVV */}
-            <div className="flex-1">
-              <label htmlFor="cvv" className="block text-sm font-medium text-gray-700">
-                CVV
-              </label>
+            <div>
+              <label className="block text-sm font-medium">Prix unitaire</label>
               <input
-                type="password"
-                name="cvv"
-                id="cvv"
-                value={formData.cvv}
-                onChange={handleChange}
-                placeholder="***"
-                maxLength={4}
-                required
-                disabled={isLoading || success}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500"
+                type="number"
+                value={selectedPaiement?.sousActe?.Prix || 0}
+                disabled
+                className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium">Montant</label>
+              <input
+                type="number"
+                value={montant}
+                onChange={(e) => setMontant(Number(e.target.value))}
+                className="mt-1 block w-full rounded-md border border-gray-300 p-2"
               />
             </div>
           </div>
 
-          {/* Bouton de Soumission */}
-          <button
-            type="submit"
-            disabled={isLoading || success}
-            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white transition duration-300 ${
-              isLoading || success
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-            }`}
-          >
-            {isLoading ? (
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : success ? (
-              'Paiement Réussi !'
-            ) : (
-              `Payer ${formData.amount.toFixed(2)} €`
-            )}
-          </button>
-        </form>
-      </div>
+          <DialogFooter className="mt-4">
+            <Button onClick={handleSubmitPaiement} disabled={isLoading}>
+              {isLoading ? "Paiement en cours..." : "Soumettre"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

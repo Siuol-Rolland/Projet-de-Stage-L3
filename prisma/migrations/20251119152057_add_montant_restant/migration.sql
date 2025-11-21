@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "PAIEMENT" ADD COLUMN     "Montant_Restant" DOUBLE PRECISION;

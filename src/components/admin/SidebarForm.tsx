@@ -86,7 +86,7 @@ export default function SidebarForm() {
             </Link>
 
             <Link
-                href="#"
+                href="/page/admin/payement"
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:bg-primary/90 hover:text-white transition"
             >
                 <Wallet2 className="w-5 h-5" />

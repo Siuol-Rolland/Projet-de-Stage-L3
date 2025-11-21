@@ -14,3 +14,4 @@ export const prisma: ExtendedPrisma = global.prisma || prismaExtended;
 if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
+

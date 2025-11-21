@@ -163,7 +163,9 @@ export async function GET(req: Request) {
     const notifications = await prisma.nOTIFICATION.findMany({
       where: {
         id_Etudiant: etudiantId,
-        Type: "EVALUATION", // ← uniquement les notifications d'évaluation
+        Type:{
+          in: ["EVALUATION", "VALIDATION"]
+        } , // ← uniquement les notifications d'évaluation
       },
       orderBy: { Date_Envoi: "desc" },
     });
