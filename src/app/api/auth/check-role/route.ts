@@ -1,6 +1,6 @@
 // "use server";
 // import { NextResponse } from "next/server";
-// import { PrismaClient } from "@/generated/prisma";
+// import { PrismaClient } from "../../../../../generated/prisma";
 
 // const prisma = new PrismaClient();
 
@@ -36,8 +36,9 @@
 
 "use server";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
+
 import { createClient as createSupabaseServerClient } from "@/utils/supabase/server";
+import { PrismaClient } from "../../../../../generated/prisma";
 
 const prisma = new PrismaClient();
 

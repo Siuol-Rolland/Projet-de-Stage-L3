@@ -62,11 +62,11 @@ export default function SidebarForm() {
             </Link>
 
             <Link
-                href="#"
+                href="/page/admin/users"
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:bg-primary/90 hover:text-white transition"
             >
                 <Users className="w-5 h-5" />
-                <span>Etudiants</span>
+                <span>Utilisateurs</span>
             </Link>
 
             <Link
@@ -93,13 +93,13 @@ export default function SidebarForm() {
                 <span>Payement</span>
             </Link>
 
-            <Link
+            {/* <Link
                 href="#"
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:bg-primary/90 hover:text-white transition"
             >
                 <Settings className="w-5 h-5" />
                 <span>Paramètres</span>
-            </Link>
+            </Link> */}
         </nav>
 
         {/* Footer Sidebar */}

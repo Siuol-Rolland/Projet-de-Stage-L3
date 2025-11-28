@@ -184,5 +184,64 @@
 
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+
   }
+
+  .scrollable {
+  position: relative;
+  overflow-y: auto;
+  max-height: 400px; /* adapte selon ton composant */
+  padding-right: 10px; /* pour éviter overlay sur contenu */
 }
+.scrollable::before,
+.scrollable::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 20px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scrollable::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.08), transparent);
+}
+
+.scrollable::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.08), transparent);
+}
+
+/* Scrollbar invisible par défaut */
+.scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0);
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+/* Hover → scrollbar visible */
+.scrollable:hover::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5); /* slate-400 */
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox */
+.scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148,163,184,0) transparent;
+}
+
+.scrollable:hover {
+  scrollbar-color: rgba(148,163,184,0.5) transparent;
+}
+}
+

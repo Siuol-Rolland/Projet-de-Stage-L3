@@ -1,7 +1,7 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "../../../../../generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -46,6 +46,7 @@ export async function GET() {
     });
     return NextResponse.json(deps);
   } catch (error) {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    // return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }

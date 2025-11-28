@@ -340,7 +340,7 @@ export default function EtPayementPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Sous-actes réalisés & Évaluation</h1>
+      <h1 className="text-xl font-semibold mb-4">Payement des sous-actes réalisés & Évaluation</h1>
 
       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
         <table className="min-w-full text-left">

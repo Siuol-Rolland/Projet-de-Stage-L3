@@ -1,106 +1,7 @@
-// "use server"
-
-// import { NextResponse } from "next/server";
-// import { PrismaClient } from "@/generated/prisma";
-// import { createClient } from "@/utils/supabase/server";
-
-// const prisma = new PrismaClient();
-
-// export async function POST(req: Request) {
-//   try {
-//     const supabase = await createClient();
-//     const { data: { user } } = await supabase.auth.getUser();
-    
-//     if (!user) {
-//       return NextResponse.json({ error: "Non authentifié"}, { status: 401 });
-//     }
-
-//     // Récupérer l'admin via user_id
-//     const admin = await prisma.aDMINISTRATEUR.findUnique({
-//       where: { user_id: user.id }
-//     });
-
-//     if (!admin) {
-//       return NextResponse.json({ error: "Admin introuvable" }, { status: 403 });
-//     }
-
-//     const body = await req.json();
-//     const {
-//       annee,
-//       departementId,
-//       acteId,
-//       sousActeId,
-//       nombre,
-//       dateDebut,
-//       dateFin,
-//     } = body;
-
-//     // ✅ Vérification des données essentielles
-//     if (
-//       !annee ||
-//       !departementId ||
-//       !sousActeId ||
-//       !nombre ||
-//       !dateDebut ||
-//       !dateFin
-//     ) {
-//       return NextResponse.json(
-//         { success: false, error: "Champs manquants pour l'insertion du quota." },
-//         { status: 400 }
-//       );
-//     }
-
-//     // ✅ Création du quota avec liaison au sous-acte
-//     const newQuota = await prisma.qUOTAS.create({
-//   data: {
-//     Annee: annee,
-//     Nombre: nombre,
-//     Date_Debut: new Date(dateDebut),
-//     Date_Fin: new Date(dateFin),
-
-//     // ✅ RELATION département
-//     departement: {
-//       connect: { ID_Dep: departementId }
-//     },
-
-//     // ✅ RELATION admin
-//     admin: {
-//       connect: { ID_Admin: admin.ID_Admin }
-//     },
-
-//     // ✅ RELATION sous-acte
-//     sous_actes: {
-//       connect: { ID_SActes: sousActeId }
-//     }
-//   },
-//   include: {
-//     sous_actes: true,
-//     departement: true
-//   }
-// });
-
-
-//     return NextResponse.json({
-//       success: true,
-//       message: "Quota ajouté avec succès et lié au sous-acte.",
-//       quota: newQuota,
-//     });
-//   } catch (error) {
-//     console.error("Erreur lors de la création du quota :", error);
-//     return NextResponse.json(
-//       { success: false, error: "Erreur interne du serveur." },
-//       { status: 500 }
-//     );
-//   } finally {
-//     await prisma.$disconnect();
-//   }
-// }
-
-
 "use server"
 
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "../../../../../generated/prisma";
 import { createClient } from "@/utils/supabase/server";
 
 const prisma = new PrismaClient();
@@ -180,5 +81,39 @@ export async function POST(req: Request) {
   }
 }
 
+export async function GET() {
+  try {
+    const quotas = await prisma.qUOTAS.findMany({
+      include: {
+        departement: true,
+        
+        sous_actes: {
+          include: {
+            realisations: true,
+            
+          }
+        }
+      }
+    });
 
+    // Transformer les données pour ton frontend
+    const formatted = quotas.map((q) => ({
+      id: q.ID_Quotas,
+      annee: q.Annee,
+      departement: q.departement ? q.departement.Nom_Dep : "",
+      dateDebut: q.Date_Debut,
+      dateFin: q.Date_Fin,
+      sousActes: q.sous_actes.map((sa) => ({
+        id: sa.ID_SActes,
+        sousActe: sa.Desc_SActes,
+        prix: sa.Prix,
+        nombre: q.Nombre // même nombre pour tous
+      }))
+    }));
 
+    return NextResponse.json(formatted);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json([], { status: 200 });
+  }
+}

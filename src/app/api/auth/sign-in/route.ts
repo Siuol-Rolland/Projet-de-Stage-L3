@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "../../../../../generated/prisma";
 
 const prisma = new PrismaClient();
 

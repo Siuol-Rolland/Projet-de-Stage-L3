@@ -1,8 +1,8 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { PrismaClient, StatutPaiement } from "@/generated/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { PrismaClient, StatutPaiement } from "../../../../../generated/prisma";
 const prisma = new PrismaClient();
 // import { prisma } from "@/lib/prisma";
 
