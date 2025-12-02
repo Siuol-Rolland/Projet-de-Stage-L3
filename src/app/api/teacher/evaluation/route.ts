@@ -1,38 +1,81 @@
 "use server";
 
-import { PrismaClient } from "../../../../../generated/prisma";
-import { createClient } from "@/utils/supabase/server";
 
-const prisma = new PrismaClient();
+import { createClient } from "@/utils/supabase/server";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db/db";
+
+// export async function GET() {
+//   // Récupère tous les étudiants avec au moins une réalisation
+//   const students = await prisma.eTUDIANT.findMany({
+//     where: {
+//       realisations: {
+//         some: {}, // au moins une réalisation
+//       },
+//     },
+//     include: {
+//       departement: true,
+//       realisations: {
+//         select: {
+//           ID_Realisation: true,
+//           Note: true,
+//           id_SActes: true,
+//           sousActe: {
+//             select: {
+//               Desc_SActes: true,
+//             },
+//           },
+//         },
+//       },
+//     },
+//   });
+
+//   return new Response(JSON.stringify(students), {
+//     headers: { "Content-Type": "application/json" },
+//   });
+// }
 
 export async function GET() {
-  // Récupère tous les étudiants avec au moins une réalisation
-  const students = await prisma.eTUDIANT.findMany({
-    where: {
-      realisations: {
-        some: {}, // au moins une réalisation
-      },
-    },
-    include: {
-      departement: true,
-      realisations: {
-        select: {
-          ID_Realisation: true,
-          Note: true,
-          id_SActes: true,
-          sousActe: {
-            select: {
-              Desc_SActes: true,
-            },
-          },
+  try {
+    // On récupère les étudiants qui ont au moins une réalisation
+    const students = await prisma.eTUDIANT.findMany({
+      where: {
+        realisations: {
+          some: {}, // au moins une réalisation
         },
       },
-    },
-  });
+      include: {
+        realisations: {
+          include: {
+            sousActe: true,
+          },
+        },
+        departement: true,
+      },
+    });
 
-  return new Response(JSON.stringify(students), {
-    headers: { "Content-Type": "application/json" },
-  });
+    // Transformer les données pour le front
+    const result = students.flatMap((etudiant) =>
+      etudiant.realisations.map((real) => ({
+        ID_Realisation: real.ID_Realisation,
+        Nom: etudiant.FullName_Et,
+        annee: etudiant.Annee_Et,
+        departement: etudiant.departement.Nom_Dep,
+        Note: real.Note,
+        sousActe: {
+          Desc_SActes: real.sousActe.Desc_SActes,
+          Prix: real.sousActe.Prix,
+        },
+        photoUrl: etudiant.Photo_Et,
+        Date_Realise: real.Date_Realise,
+      }))
+    );
+
+    return NextResponse.json(result);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.error();
+  }
 }
 
 export async function POST(req: Request) {

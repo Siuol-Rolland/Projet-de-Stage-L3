@@ -4,7 +4,7 @@
 // // import { PrismaClient } from "../../../../../generated/prisma";
 // // import { createClient } from "@/utils/supabase/server";
 
-// // const prisma = new PrismaClient();
+// // import { prisma } from "@/lib/db/db";
 
 // // export async function GET() {
 // //   try {
@@ -34,7 +34,7 @@
 // import { PrismaClient } from "../../../../../generated/prisma";
 // import { createClient } from "@/utils/supabase/server";
 
-// const prisma = new PrismaClient();
+// import { prisma } from "@/lib/db/db";
 
 // /**
 //  * Fonction getEtId()
@@ -135,7 +135,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 import { createClient } from "@/utils/supabase/server";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 // Récupérer l'ID de l'étudiant connecté
 async function getEtId() {

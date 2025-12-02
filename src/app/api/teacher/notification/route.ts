@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 import { createClient } from "@/utils/supabase/server";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 /**
  * Récupère l'ID du professeur connecté à partir de la session Supabase

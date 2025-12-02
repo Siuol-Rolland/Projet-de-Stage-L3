@@ -71,6 +71,8 @@ export default function QuotasPage() {
   const [sousActes, setSousActes] = useState<{ ID_SActes: number; Desc_SActes: string }[]>([]);
 
   const filterRef = useRef<HTMLDivElement>(null);
+  const ignoreRef = useRef<HTMLDivElement>(null);
+
 
   const getFilterLabel = () => {
     const dep = filters.departement || "Tous les départements";
@@ -138,14 +140,23 @@ useEffect(() => {
 
 useEffect(() => {
   function handleClickOutside(event: MouseEvent) {
-    if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-      setFilterOpen(false); // 🔥 Ferme le menu si clic en dehors
-    }
+    const target = event.target as HTMLElement;
+
+    // 1️⃣ NE PAS FERMER si clic dans le popup filtre
+    if (filterRef.current?.contains(target)) return;
+
+    // 2️⃣ NE PAS FERMER si clic dans un SelectContent (shadcn/ui)
+    if (target.closest("[data-radix-popper-content-wrapper]")) return;
+
+    // 3️⃣ Sinon, fermer
+    setFilterOpen(false);
   }
 
   document.addEventListener("mousedown", handleClickOutside);
   return () => document.removeEventListener("mousedown", handleClickOutside);
-}, [filterRef]);
+}, []);
+
+
 
 
 
@@ -527,47 +538,74 @@ const filteredQuotas = quotas.filter((q: QuotaType) => {
       <div className="flex justify-between items-center mb-4">
         {/* Bouton filtre */}
         <div className="relative">
-          <Button variant="outline" className="flex items-center gap-2" onClick={() => setFilterOpen(!filterOpen)}>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={() => setFilterOpen(!filterOpen)}
+          >
             <Funnel /> Filtrer
           </Button>
 
-          {/* Pop-up filtre inline */}
           {filterOpen && (
-            <div ref={filterRef} className="absolute left-0 mt-2 w-64 p-4 bg-white border rounded-lg shadow-lg z-10 transition-transform transform scale-95 animate-scaleIn">
-              <div className="grid gap-4">
-                <div className="grid gap-1">
-                  <Label>Année</Label>
-                  <Select value={filters.annee} onValueChange={v => setFilters(prev => ({ ...prev, annee: v }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez une année" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {annees.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+            <div ref={ignoreRef}>
+              <div
+                ref={filterRef}
+                className="absolute left-0 mt-2 w-64 p-4 bg-white border rounded-lg shadow-lg z-10 transition-transform transform scale-95 animate-scaleIn"
+              >
+                <div className="grid gap-4">
+                  <div className="grid gap-1">
+                    <Label>Année</Label>
+                    <Select
+                      value={filters.annee}
+                      onValueChange={(v) => setFilters((prev) => ({ ...prev, annee: v }))}
+                    >
+                      <SelectTrigger onMouseDown={(e) => e.stopPropagation()}>
+                        <SelectValue placeholder="Sélectionnez une année" />
+                      </SelectTrigger>
+                      <SelectContent onMouseDown={(e) => e.stopPropagation()}>
+                        {annees.map((a) => (
+                          <SelectItem key={a} value={a}>
+                            {a}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid gap-1">
+                    <Label>Département</Label>
+                    <Select
+                      value={filters.departement}
+                      onValueChange={(v) =>
+                        setFilters((prev) => ({ ...prev, departement: v }))
+                      }
+                    >
+                      <SelectTrigger onMouseDown={(e) => e.stopPropagation()}>
+                        <SelectValue placeholder="Sélectionnez un département" />
+                      </SelectTrigger>
+                      <SelectContent onMouseDown={(e) => e.stopPropagation()}>
+                        {departement.map((d) => (
+                          <SelectItem key={d} value={d}>
+                            {d}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    onClick={() => setFilters({ annee: "", departement: "" })}
+                    className="mt-2"
+                    variant="outline"
+                  >
+                    Réinitialiser
+                  </Button>
                 </div>
-                <div className="grid gap-1">
-                  <Label>Département</Label>
-                  <Select value={filters.departement} onValueChange={v => setFilters(prev => ({ ...prev, departement: v }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez un département" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departement.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  onClick={() => setFilters({ annee: "", departement: "" })}
-                  className="mt-2"
-                  variant="outline"
-                >
-                  Réinitialiser
-                </Button>
               </div>
             </div>
           )}
         </div>
+
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>

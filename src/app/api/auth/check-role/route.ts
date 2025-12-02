@@ -2,7 +2,7 @@
 // import { NextResponse } from "next/server";
 // import { PrismaClient } from "../../../../../generated/prisma";
 
-// const prisma = new PrismaClient();
+// import { prisma } from "@/lib/db/db";
 
 // export async function POST(req: Request) {
 //   try {
@@ -40,7 +40,7 @@ import { NextResponse } from "next/server";
 import { createClient as createSupabaseServerClient } from "@/utils/supabase/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 export async function POST(req: Request) {
   try {

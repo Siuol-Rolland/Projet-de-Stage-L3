@@ -1,109 +1,267 @@
 // "use server";
 
 // import { NextResponse } from "next/server";
-
 // import { createClient } from "@/utils/supabase/server";
-// import { PrismaClient } from "../../../../../../generated/prisma";
-
-// const prisma = new PrismaClient();
+// import { prisma } from "@/lib/db/db";
 
 // export async function POST(req: Request) {
 //   try {
 //     const { etudiantId, sousActeId, quotaId } = await req.json();
 
-//     // 1️⃣ Vérifier le quota restant
-//     const quota = await prisma.qUOTAS.findUnique({
-//       where: { ID_Quotas: quotaId },
-//       include: { sous_actes: true },
-//     });
-
-//     if (!quota || quota.Nombre <= 0) {
+//     if (!etudiantId || !sousActeId || !quotaId) {
 //       return NextResponse.json(
-//         { success: false, message: "Quota épuisé." },
+//         { success: false, message: "Paramètres manquants." },
 //         { status: 400 }
 //       );
 //     }
 
-//     // 2️⃣ Créer une réalisation
-//     const realisation = await prisma.rEALISATION.create({
-//       data: {
-//         Date_Realise: new Date(),
-//         Statut_Valide: false,
-//         id_Etudiant: etudiantId,
-//         id_SActes: sousActeId,
-//       },
-//       include: { sousActe: { include: { acte: { include: { departement: true } } } } },
-//     });
+//     // 🔄 Transaction atomique
+//     const result = await prisma.$transaction(async (tx) => {
+//       // 1. Verrouiller la ligne du quota pour lecture/mise à jour
+//       const quota = await tx.qUOTAS.findUnique({
+//         where: { ID_Quotas: quotaId },
+//         include: { sous_actes: true },
+//         // Verrouillage de ligne
+//         // @ts-ignore - Le type pour 'forUpdate' n'est pas correctement défini dans Prisma
+//         forUpdate: true,
+//       });
 
-//     // 3️⃣ Décrémenter le quota
-//     await prisma.qUOTAS.update({
-//       where: { ID_Quotas: quotaId },
-//       data: { Nombre: { decrement: 1 } },
-//     });
+//       if (!quota) {
+//         throw new Error("Quota introuvable.");
+//       }
 
-//     // 4️⃣ Si le quota atteint 0, il sera filtré côté front (ou on peut retourner une info)
-//     const remainingQuota = quota.Nombre - 1;
+//       // Vérifier si le sous-acte appartient au quota
+//       const sousActeInQuota = quota.sous_actes.some(
+//         (sa) => sa.ID_SActes === sousActeId
+//       );
 
-//     // 5️⃣ Notifier les professeurs du même département
-//     const profs = await prisma.pROFESSEURS.findMany({
-//       where: {
-//         departements: {
-//           some: { ID_Dep: realisation.sousActe.acte.departement.ID_Dep },
+//       if (!sousActeInQuota) {
+//         throw new Error("Ce sous-acte n'appartient pas à ce quota.");
+//       }
+
+//       // 2. Vérifier le quota disponible
+//       const countRealisation = await tx.rEALISATION.count({
+//         where: {
+//           id_Etudiant: etudiantId,
+//           id_SActes: sousActeId,
+//           // Ajouter des conditions de date si nécessaire
+//           // Date_Realise: { gte: quota.Date_Debut, lte: quota.Date_Fin }
 //         },
-//       },
+//       });
+
+//       if (countRealisation >= quota.Nombre) {
+//         throw new Error(`Quota maximum atteint (${countRealisation}/${quota.Nombre}).`);
+//       }
+
+//       // 3. Créer la réalisation
+//       const realisation = await tx.rEALISATION.create({
+//         data: {
+//           Date_Realise: new Date(),
+//           Statut_Valide: false,
+//           id_Etudiant: etudiantId,
+//           id_SActes: sousActeId,
+//         },
+//         include: {
+//           sousActe: {
+//             include: {
+//               acte: { include: { departement: true } },
+//             },
+//           },
+//         },
+//       });
+
+//       // 4. Créer les notifications
+//       const profs = await tx.pROFESSEURS.findMany({
+//         where: {
+//           departements: {
+//             some: {
+//               ID_Dep: realisation.sousActe.acte.departement.ID_Dep,
+//             },
+//           },
+//         },
+//       });
+
+//       const notifications = await Promise.all(
+//         profs.map((prof) =>
+//           tx.nOTIFICATION.create({
+//             data: {
+//               Message: `L'étudiant a réalisé le sous-acte "${realisation.sousActe.Desc_SActes}" à évaluer.`,
+//               Type: "REALISATION",
+//               id_SActes: sousActeId,
+//               id_Prof: prof.ID_Prof,
+//               id_Realisation: realisation.ID_Realisation,
+//             },
+//           })
+//         )
+//       );
+
+//       return { realisation, notifications };
 //     });
 
-//     const notifications = await prisma.$transaction(
-//       profs.map((prof) =>
-//         prisma.nOTIFICATION.create({
-//           data: {
-//             Message: `L'étudiant a réalisé le sous-acte "${realisation.sousActe.Desc_SActes}" à évaluer.`,
-//             Type: "REALISATION",
-//             id_SActes: sousActeId,
-//             id_Prof: prof.ID_Prof,
-//             id_Realisation: realisation.ID_Realisation,
-//           },
-//         })
-//       )
-//     );
-
-//     // 6️⃣ Broadcast via Supabase Realtime
+//     // 🔔 Notification en temps réel (hors transaction)
 //     const supabase = await createClient();
 //     await supabase.channel("notifications").send({
 //       type: "broadcast",
 //       event: "new_notification",
-//       payload: { notifications },
+//       payload: { notifications: result.notifications },
 //     });
 
 //     return NextResponse.json({
 //       success: true,
-//       realisation,
-//       remainingQuota,
-//       notifications,
+//       realisation: result.realisation,
+//       notifications: result.notifications,
 //     });
 //   } catch (error) {
-//     console.error("Erreur lors de la réalisation:", error);
+//     console.error("Erreur POST REALISATION:", error);
 //     return NextResponse.json(
-//       { success: false, message: "Erreur lors de la réalisation" },
+//       { 
+//         success: false, 
+//         message: error instanceof Error ? error.message : "Erreur serveur lors de la réalisation." 
+//       },
 //       { status: 500 }
 //     );
 //   }
 // }
 
+// // export async function POST(req: Request) {
+// //   try {
+// //     const { etudiantId, sousActeId, quotaId } = await req.json();
+
+// //     if (!etudiantId || !sousActeId || !quotaId) {
+// //       return NextResponse.json(
+// //         { success: false, message: "Paramètres manquants." },
+// //         { status: 400 }
+// //       );
+// //     }
+
+// //     // 🔎 Vérifier que le quota existe
+// //     const quota = await prisma.qUOTAS.findUnique({
+// //       where: { ID_Quotas: quotaId },
+// //       include: { sous_actes: true },
+// //     });
+
+// //     if (!quota) {
+// //       return NextResponse.json(
+// //         { success: false, message: "Quota introuvable." },
+// //         { status: 404 }
+// //       );
+// //     }
+
+// //     // Vérifier si le sous-acte appartient au quota
+// //     const sousActeInQuota = quota.sous_actes.some(
+// //       (sa) => sa.ID_SActes === sousActeId
+// //     );
+
+// //     if (!sousActeInQuota) {
+// //       return NextResponse.json(
+// //         { success: false, message: "Ce sous-acte n'appartient pas à ce quota." },
+// //         { status: 400 }
+// //       );
+// //     }
+
+// //     // 📌 Nombre déjà réalisé
+// //     const countRealisation = await prisma.rEALISATION.count({
+// //       where: {
+// //         id_Etudiant: etudiantId,
+// //         id_SActes: sousActeId,
+// //       },
+// //     });
+
+// //     if (countRealisation >= quota.Nombre) {
+// //       return NextResponse.json(
+// //         {
+// //           success: false,
+// //           message: `Quota maximum atteint (${countRealisation}/${quota.Nombre}).`,
+// //         },
+// //         { status: 400 }
+// //       );
+// //     }
+
+// //     // 🔵 Transaction réalisation + notifications
+// //     const result = await prisma.$transaction(async (tx) => {
+// //       const realisation = await tx.rEALISATION.create({
+// //         data: {
+// //           Date_Realise: new Date(),
+// //           Statut_Valide: false,
+// //           id_Etudiant: etudiantId,
+// //           id_SActes: sousActeId,
+// //         },
+// //         include: {
+// //           sousActe: {
+// //             include: {
+// //               acte: { include: { departement: true } },
+// //             },
+// //           },
+// //         },
+// //       });
+
+// //       // Récupérer les profs du département
+// //       const profs = await tx.pROFESSEURS.findMany({
+// //         where: {
+// //           departements: {
+// //             some: {
+// //               ID_Dep: realisation.sousActe.acte.departement.ID_Dep,
+// //             },
+// //           },
+// //         },
+// //       });
+
+// //       // Notifications
+// //       const notifications = await Promise.all(
+// //         profs.map((prof) =>
+// //           tx.nOTIFICATION.create({
+// //             data: {
+// //               Message: `L'étudiant a réalisé le sous-acte "${realisation.sousActe.Desc_SActes}" à évaluer.`,
+// //               Type: "REALISATION",
+// //               id_SActes: sousActeId,
+// //               id_Prof: prof.ID_Prof,
+// //               id_Realisation: realisation.ID_Realisation,
+// //             },
+// //           })
+// //         )
+// //       );
+
+// //       return { realisation, notifications };
+// //     });
+
+// //     // 🔊 Broadcast Supabase
+// //     const supabase = await createClient();
+// //     await supabase.channel("notifications").send({
+// //       type: "broadcast",
+// //       event: "new_notification",
+// //       payload: { notifications: result.notifications },
+// //     });
+
+// //     return NextResponse.json({
+// //       success: true,
+// //       realisation: result.realisation,
+// //       notifications: result.notifications,
+// //     });
+// //   } catch (error) {
+// //     console.error("Erreur POST REALISATION:", error);
+// //     return NextResponse.json(
+// //       { success: false, message: "Erreur serveur lors de la réalisation." },
+// //       { status: 500 }
+// //     );
+// //   }
+// // }
 
 "use server";
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { PrismaClient } from "../../../../../../generated/prisma";
+import { prisma } from "@/lib/db/db";
 
-const prisma = new PrismaClient();
+// Fonction utilitaire pour gérer les erreurs de base de données
+const handleDatabaseError = (error: any) => {
+  console.error("Database error:", error);
+  throw new Error("Une erreur est survenue lors de l'accès à la base de données");
+};
 
 export async function POST(req: Request) {
   try {
     const { etudiantId, sousActeId, quotaId } = await req.json();
 
-    // 🛡️ Vérifier que quotaId, sousActeId et etudiantId existent
     if (!etudiantId || !sousActeId || !quotaId) {
       return NextResponse.json(
         { success: false, message: "Paramètres manquants." },
@@ -111,90 +269,122 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🛡️ Vérifier le quota mais ne pas décrémenter
-    const quota = await prisma.qUOTAS.findUnique({
-      where: { ID_Quotas: quotaId },
-      include: { sous_actes: true },
-    });
-
-    if (!quota) {
-      return NextResponse.json(
-        { success: false, message: "Quota introuvable." },
-        { status: 404 }
-      );
-    }
-
-    if (quota.Nombre <= 0) {
-      return NextResponse.json(
-        { success: false, message: "Quota épuisé." },
-        { status: 400 }
-      );
-    }
-
-    // 🟦  TRANSACTION GLOBALE
+    // 🔄 Transaction atomique avec gestion des erreurs améliorée
     const result = await prisma.$transaction(async (tx) => {
-      // 1️⃣ Créer la réalisation
-      const realisation = await tx.rEALISATION.create({
-        data: {
-          Date_Realise: new Date(),
-          Statut_Valide: false,
-          id_Etudiant: etudiantId,
-          id_SActes: sousActeId,
-        },
-        include: {
-          sousActe: {
-            include: {
-              acte: { include: { departement: true } }
-            }
-          }
+      try {
+        // 1. Verrouiller la ligne du quota pour lecture/mise à jour
+        const quota = await tx.qUOTAS.findUnique({
+          where: { ID_Quotas: quotaId },
+          include: { sous_actes: true },
+        });
+
+        if (!quota) {
+          throw new Error("Quota introuvable.");
         }
-      });
 
-      // 2️⃣ Trouver les professeurs du département
-      const profs = await tx.pROFESSEURS.findMany({
-        where: {
-          departements: {
-            some: { ID_Dep: realisation.sousActe.acte.departement.ID_Dep },
+        // Vérifier si le sous-acte appartient au quota
+        const sousActeInQuota = quota.sous_actes.some(
+          (sa) => sa.ID_SActes === sousActeId
+        );
+
+        if (!sousActeInQuota) {
+          throw new Error("Ce sous-acte n'appartient pas à ce quota.");
+        }
+
+        // 2. Vérifier le quota disponible avec une requête plus robuste
+        const countRealisation = await tx.rEALISATION.count({
+          where: {
+            id_Etudiant: etudiantId,
+            id_SActes: sousActeId,
+            Date_Realise: {
+              gte: new Date(new Date().getFullYear(), 0, 1), // Depuis le début de l'année
+            }
           },
-        },
-      });
+        });
 
-      // 3️⃣ Créer toutes les notifications
-      const notifications = await Promise.all(
-        profs.map((prof) =>
-          tx.nOTIFICATION.create({
-            data: {
-              Message: `L'étudiant a réalisé le sous-acte "${realisation.sousActe.Desc_SActes}" à évaluer.`,
-              Type: "REALISATION",
-              id_SActes: sousActeId,
-              id_Prof: prof.ID_Prof,
-              id_Realisation: realisation.ID_Realisation,
+        if (countRealisation >= quota.Nombre) {
+          throw new Error(`Quota maximum atteint (${countRealisation}/${quota.Nombre}).`);
+        }
+
+        // 3. Créer la réalisation
+        const realisation = await tx.rEALISATION.create({
+          data: {
+            Date_Realise: new Date(),
+            Statut_Valide: false,
+            id_Etudiant: etudiantId,
+            id_SActes: sousActeId,
+          },
+          include: {
+            sousActe: {
+              include: {
+                acte: { include: { departement: true } },
+              },
             },
-          })
-        )
-      );
+          },
+        });
 
-      return { realisation, notifications };
+        // 4. Créer les notifications
+        const profs = await tx.pROFESSEURS.findMany({
+          where: {
+            departements: {
+              some: {
+                ID_Dep: realisation.sousActe.acte.departement.ID_Dep,
+              },
+            },
+          },
+        });
+
+        const notifications = await Promise.all(
+          profs.map((prof) =>
+            tx.nOTIFICATION.create({
+              data: {
+                Message: `L'étudiant a réalisé le sous-acte "${realisation.sousActe.Desc_SActes}" à évaluer.`,
+                Type: "REALISATION",
+                id_SActes: sousActeId,
+                id_Prof: prof.ID_Prof,
+                id_Realisation: realisation.ID_Realisation,
+              },
+            })
+          )
+        );
+
+        return { realisation, notifications };
+      } catch (error) {
+        console.error("Erreur dans la transaction:", error);
+        throw error; // Propage l'erreur pour la gérer dans le bloc catch principal
+      }
+    }, {
+      // Options de transaction
+      isolationLevel: 'Serializable', // Niveau d'isolement plus strict
+      timeout: 10000, // Timeout de 10 secondes
+      maxWait: 2000, // Temps d'attente maximum pour acquérir un verrou
     });
 
-    // 🟧 4️⃣ Broadcast hors de la transaction (important!)
-    const supabase = await createClient();
-    await supabase.channel("notifications").send({
-      type: "broadcast",
-      event: "new_notification",
-      payload: { notifications: result.notifications },
-    });
+    // 🔔 Notification en temps réel (hors transaction)
+    try {
+      const supabase = await createClient();
+      await supabase.channel("notifications").send({
+        type: "broadcast",
+        event: "new_notification",
+        payload: { notifications: result.notifications },
+      });
+    } catch (supabaseError) {
+      console.error("Erreur Supabase (non critique):", supabaseError);
+      // On continue même en cas d'erreur Supabase
+    }
 
     return NextResponse.json({
       success: true,
       realisation: result.realisation,
       notifications: result.notifications,
     });
-
   } catch (error) {
-    console.error("Erreur lors de la réalisation:", error);
+    console.error("Erreur POST REALISATION:", error);
     return NextResponse.json(
-      { success: false, message: "Erreur lors de la réalisation" },
+      { 
+        success: false, 
+        message: error instanceof Error ? error.message : "Erreur serveur lors de la réalisation." 
+      },
       { status: 500 }
     );
   }

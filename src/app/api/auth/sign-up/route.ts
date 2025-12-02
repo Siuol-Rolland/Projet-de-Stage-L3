@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 export async function POST(req: Request) {
   try {

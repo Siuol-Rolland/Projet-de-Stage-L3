@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 // 👉 POST /api/department
 export async function POST(request: Request) {

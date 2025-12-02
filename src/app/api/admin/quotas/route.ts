@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 import { createClient } from "@/utils/supabase/server";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 export async function POST(req: Request) {
   try {

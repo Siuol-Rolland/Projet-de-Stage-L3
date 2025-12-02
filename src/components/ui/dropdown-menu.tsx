@@ -23,7 +23,7 @@ function DropdownMenuTrigger({
   return <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
 }
 
-// 🎨 Menu Content : fond #daebff
+// 🎨 Menu Content : fond #ffffff
 function DropdownMenuContent({
   className,
   sideOffset = 4,
@@ -41,7 +41,7 @@ function DropdownMenuContent({
           "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
           className
         )}
-        style={{ backgroundColor: "#daebff" }} // 👈 fond du menu
+        style={{ backgroundColor: "#ffffff" }} // 👈 fond du menu
         {...props}
       />
     </DropdownMenuPrimitive.Portal>
@@ -229,7 +229,7 @@ function DropdownMenuSubContent({
         "hover:bg-[#91c8ff] focus:bg-[#91c8ff]",
         className
       )}
-      style={{ backgroundColor: "#daebff" }} // 👈 même fond que le menu principal
+      style={{ backgroundColor: "#ffffff" }} // 👈 même fond que le menu principal
       {...props}
     />
   )

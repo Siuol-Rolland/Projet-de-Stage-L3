@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "../../../../../generated/prisma";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 export async function SignInAction(formData: FormData) {
   const email = formData.get("email")?.toString();

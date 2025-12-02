@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { PrismaClient, StatutPaiement } from "../../../../../generated/prisma";
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 // import { prisma } from "@/lib/prisma";
 
 
@@ -125,6 +125,30 @@ export async function POST(req: Request) {
         id_Admin: admin.ID_Admin,
     },
     });
+
+    //  VALIDATION AUTOMATIQUE DU QUOTA RÉALISÉ SI PAIEMENT TOTAL ET NOTE SUPPÉRIEURE À 10/20
+    if (nouveauStatut === StatutPaiement.TOTAL) {
+      for (const real of paiement.realisations) {
+        if (real.Note !== null && real.Note >= 10) {
+          // marquer la réalisation comme validée
+          await prisma.rEALISATION.update({
+            where: { ID_Realisation: real.ID_Realisation },
+            data: { Statut_Valide: true }, 
+          });
+          
+          // envoyer une notification à l'étudiant
+          await prisma.nOTIFICATION.create({
+            data: {
+              Message: `Votre quota sur "${real.sousActe.Desc_SActes}" a été validé.`,
+              Type: "VALIDATION",
+              id_Etudiant: paiement.id_Etudiant,
+              id_Realisation: real.ID_Realisation,
+            },
+          });
+        }
+      }
+    }
+      
 
     // 📩 ENVOYER UNE NOTIFICATION À L'ÉTUDIANT
     await prisma.nOTIFICATION.create({

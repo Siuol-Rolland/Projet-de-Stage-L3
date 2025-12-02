@@ -1,11 +1,3 @@
-// import React from 'react'
-
-// export default function AdminPayementPage() {
-//   return (
-//     <div>AdminPayementPage</div>
-//   )
-// }
-
 "use client";
 
 import React, { useEffect,useState } from "react";
@@ -249,6 +241,7 @@ export default function AdminPayementPage() {
             <tr>
               <th className="px-4 py-3">Étudiant</th>
               <th className="px-4 py-3">Sous-actes</th>
+              <th className="px-4 py-3">Note</th>
               <th className="px-4 py-3">Prix unitaire</th>
               <th className="px-4 py-3">Montant payé</th>
               <th className="px-4 py-3">Montant restant</th>
@@ -263,6 +256,7 @@ export default function AdminPayementPage() {
               <tr key={p.ID_Realisation} className="border-b hover:bg-gray-50">
                 <td className="px-4 py-3">{p.Nom_Etudiant}</td>
                 <td className="px-4 py-3">{p.sousActe?.Desc_SActes}</td>
+                <td className="px-4 py-3">{p.Note ?? "—"}/20</td>
                 <td className="px-4 py-3">{p.sousActe?.Prix} Ar</td>
                 <td className="px-4 py-3">{p.paiement?.Montant ?? "—"} Ar</td>
                 <td className="px-4 py-3">{p.Montant_Restant} Ar</td>

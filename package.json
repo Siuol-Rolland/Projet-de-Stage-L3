@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@prisma/client": "^6.18.0",
+    "@prisma/client": "^7.0.1",
     "@prisma/extension-accelerate": "^2.0.2",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -63,7 +63,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.5",
     "postcss": "^8.5.6",
-    "prisma": "^6.18.0",
+    "prisma": "^7.0.1",
     "tailwindcss": "^4.1.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",

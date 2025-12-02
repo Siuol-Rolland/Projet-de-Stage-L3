@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 export async function POST(request: Request) {
   try {

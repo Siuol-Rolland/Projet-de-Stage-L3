@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "../../../../../generated/prisma";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/db";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
