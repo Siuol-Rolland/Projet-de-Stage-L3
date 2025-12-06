@@ -323,14 +323,13 @@ const filteredQuotas = quotas.filter((q: QuotaType) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-  annee: formData.annee,
-  departementId: selectedDep?.ID_Dep,
-  acteId: selectedActe?.ID_Actes,
-  sousActesList: sousActesPrepared,
-  dateDebut: formData.dateDebut,
-  dateFin: formData.dateFin,
-}),
-
+          annee: formData.annee,
+          departementId: selectedDep?.ID_Dep,
+          acteId: selectedActe?.ID_Actes,
+          sousActesList: sousActesPrepared,
+          dateDebut: formData.dateDebut,
+          dateFin: formData.dateFin,
+        }),
       });
 
       const result = await response.json();
@@ -648,7 +647,7 @@ const filteredQuotas = quotas.filter((q: QuotaType) => {
 
       {/* Header du tableau */}
       <header className="flex items-center justify-between mb-6">
-        <div>
+        <div className="flex flex-col items-center text-center w-full">
           <h3 className="text-foreground font-semibold text-lg">Quotas</h3>
           <p className="text-muted-foreground text-sm">
             {getFilterLabel()}

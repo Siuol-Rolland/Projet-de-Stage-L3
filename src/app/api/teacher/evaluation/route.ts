@@ -5,35 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/db";
 
-// export async function GET() {
-//   // Récupère tous les étudiants avec au moins une réalisation
-//   const students = await prisma.eTUDIANT.findMany({
-//     where: {
-//       realisations: {
-//         some: {}, // au moins une réalisation
-//       },
-//     },
-//     include: {
-//       departement: true,
-//       realisations: {
-//         select: {
-//           ID_Realisation: true,
-//           Note: true,
-//           id_SActes: true,
-//           sousActe: {
-//             select: {
-//               Desc_SActes: true,
-//             },
-//           },
-//         },
-//       },
-//     },
-//   });
 
-//   return new Response(JSON.stringify(students), {
-//     headers: { "Content-Type": "application/json" },
-//   });
-// }
 
 export async function GET() {
   try {
@@ -119,7 +91,6 @@ export async function POST(req: Request) {
       where: { ID_Realisation: realisationId },
       data: {
         Note: note,
-        Statut_Valide: true,
         id_Prof: professeur.ID_Prof,
       },
       include: { etudiant: true, sousActe: true },

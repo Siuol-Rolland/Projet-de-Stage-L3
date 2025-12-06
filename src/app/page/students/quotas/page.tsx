@@ -366,10 +366,18 @@ const displayedList =
   const quotaForDetails =
   detailsIndex !== null ? displayedList[detailsIndex] : null;
 
+  // const realizationsForDetails =
+  // detailsIndex !== null
+  //   ? realisations.filter(r => r.id_SActes === displayedList[detailsIndex].ID_SActes)
+  //   : [];
   const realizationsForDetails =
   detailsIndex !== null
-    ? realisations.filter(r => r.id_SActes === displayedList[detailsIndex].ID_SActes)
+    ? realisations
+        .filter(r => r.id_SActes === displayedList[detailsIndex].ID_SActes)
+        .filter(r => (filterType === "validated" ? r.Statut_Valide === true : true))
     : [];
+
+  
 
 
   return (
@@ -634,7 +642,9 @@ const displayedList =
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Détails du quota réalisé</DialogTitle>
+            <DialogTitle>
+              {filterType === "validated" ? "Détails du quota validé" : "Détails du quota réalisé"}
+            </DialogTitle>
           </DialogHeader>
 
           {quotaForDetails && realizationsForDetails.length > 0 ? (
@@ -662,6 +672,7 @@ const displayedList =
                   {/* 🔹 CAS QUOTAS VALIDÉS */}
                   {filterType === "validated" && (
                     <div className="mt-2 space-y-1">
+                      
                       <p>Note: {r.Note !== null ? `${r.Note}/20` : "—"}</p>
 
                       <p>
