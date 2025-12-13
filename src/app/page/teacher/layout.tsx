@@ -10,12 +10,12 @@ interface TeacherLayoutProps{
 
 export default function TeacherLayout({children} : TeacherLayoutProps) {
   return (
-    <div className="min-h-screen grid grid-cols-[250px_1fr] bg-muted">
+    <div className="h-screen grid grid-cols-[250px_1fr] bg-muted overflow-hidden">
             {/* === Sidebar === */}
             <SidebarForm />
     
             {/* Conent Dash */}
-            <div className="flex flex-col flex-1 bg-background">
+            <div className="flex flex-col bg-background h-full overflow-hidden">
                 {/* === Header === */}
                 <HeaderForm/>
                 

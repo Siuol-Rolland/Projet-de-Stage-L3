@@ -22,15 +22,77 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { Ellipsis, Pencil, Trash } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 export default function ActesPage() {
   const [open, setOpen] = useState(false);
   const [departements, setDepartements] = useState<any[]>([]);
   const [selectedDep, setSelectedDep] = useState("");
   const [descActe, setDescActe] = useState("");
   const [sousActes, setSousActes] = useState([{ nom: "", prix: "" }]);
-  const [loading, setLoading] = useState(false); // ✅ état de chargement
+  const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // 🔹 Charger les départements depuis la base
+
+  // 🔹 TABLEAU STATIQUE POUR L’AFFICHAGE
+  const [actes, setActes] = useState<any[]>([]);
+
+  const actesParDepartement = actes.reduce((acc: any, acte: any) => {
+    const dep = acte.departement?.Nom_Dep || "Non défini";
+
+    if (!acc[dep]) {
+      acc[dep] = [];
+    }
+
+    acc[dep].push(acte);
+    return acc;
+  }, {});
+
+  // 🔹 MODAL MODIFICATION
+  const [editOpen, setEditOpen] = useState(false);
+  const [editStep, setEditStep] = useState<
+    "choix" | "acte" | "sous-acte" | "sous-actes-form"
+  >("choix"); 
+  const [editTarget, setEditTarget] = useState<any>(null); // acte ou sous-acte à modifier
+  const [editDesc, setEditDesc] = useState(""); // pour l’acte
+  const [selectedSousActes, setSelectedSousActes] = useState<number[]>([]); // IDs des sous-actes
+  const [selectedSousActesData, setSelectedSousActesData] = useState<
+    { ID: number; nom: string; prix: number }[]
+  >([]);
+
+  // 🔴 SUPPRESSION
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<
+    "choix" | "acte" | "sous-acte"
+  >("choix");
+
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [selectedSousActesToDelete, setSelectedSousActesToDelete] = useState<number[]>([]);
+
+
+  useEffect(() => {
+  const fetchActes = async () => {
+    try {
+      const res = await fetch("/api/admin/actes");
+      const data = await res.json();
+      setActes(data);
+    } catch (error) {
+      console.error("Erreur chargement actes", error);
+    }
+  };
+
+  fetchActes();
+}, []);
+
+
+  // 🔹 Charger les départements
   useEffect(() => {
     const fetchDepartments = async () => {
       const res = await fetch("/api/admin/department", { method: "GET" });
@@ -40,17 +102,14 @@ export default function ActesPage() {
     fetchDepartments();
   }, []);
 
-  // ➕ Ajouter un sous-acte
   const addSousActe = () => {
     setSousActes([...sousActes, { nom: "", prix: "" }]);
   };
 
-  // 🗑️ Supprimer un sous-acte
   const removeSousActe = (index: number) => {
     setSousActes(sousActes.filter((_, i) => i !== index));
   };
 
-  // 🖊️ Modifier un sous-acte
   const handleSousActeChange = (
     index: number,
     field: "nom" | "prix",
@@ -61,7 +120,6 @@ export default function ActesPage() {
     setSousActes(updatedSousActes);
   };
 
-  // ✅ Envoi vers Supabase via API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -74,7 +132,7 @@ export default function ActesPage() {
       return;
     }
 
-    setLoading(true); // ⏳ Démarrage du chargement
+    setLoading(true);
 
     try {
       const sousActesFiltres = sousActes.filter((sa) => sa.nom.trim() !== "");
@@ -101,6 +159,9 @@ export default function ActesPage() {
         setOpen(false);
         setDescActe("");
         setSousActes([{ nom: "", prix: "" }]);
+
+        await fetch("/api/admin/actes").then(res => res.json()).then(setActes);
+
       } else {
         Swal.fire({
           icon: "error",
@@ -113,17 +174,34 @@ export default function ActesPage() {
       Swal.fire({
         icon: "error",
         title: "Erreur serveur",
-        text: "Impossible de se connecter au serveur. Veuillez réessayer.",
+        text: "Impossible de se connecter au serveur.",
       });
     } finally {
-      setLoading(false); // ✅ Fin du chargement
+      setLoading(false);
     }
   };
+
+  const handleEditActe = (acte: any) => {
+    setEditTarget(acte);
+    setEditStep("choix");
+    setEditOpen(true);
+  };
+
+
+  const handleDeleteClick = (acte: any) => {
+    setDeleteTarget(acte);
+    setDeleteStep("choix");
+    setSelectedSousActesToDelete([]);
+    setDeleteOpen(true);
+  };
+
+
 
   return (
     <div className="space-x-2 p-4">
       <h1 className="text-lg font-bold mb-4">Gestion des Actes</h1>
 
+      {/* BOUTON AJOUTER */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" className="flex items-center gap-2">
@@ -155,23 +233,21 @@ export default function ActesPage() {
               </Select>
             </div>
 
-            {/* Désignation de l'acte */}
+            {/* Désignation Acte */}
             <div className="grid gap-3">
-              <Label className="text-sm font-medium">Désignation de l'acte</Label>
+              <Label>Désignation de l'acte</Label>
               <Input
                 type="text"
                 value={descActe}
                 onChange={(e) => setDescActe(e.target.value)}
-                placeholder="Nom de l'acte"
               />
             </div>
 
-            {/* Sous-actes dynamiques */}
+            {/* Sous-actes */}
             <div className="grid gap-3">
-              <Label className="text-sm font-medium">Sous-Actes</Label>
+              <Label>Sous-Actes</Label>
               {sousActes.map((sa, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  {/* Nom du sous-acte */}
                   <Input
                     type="text"
                     placeholder={`Sous-acte ${index + 1}`}
@@ -182,10 +258,9 @@ export default function ActesPage() {
                     className="flex-1"
                   />
 
-                  {/* Prix */}
                   <Input
                     type="number"
-                    placeholder="Prix en Ariary"
+                    placeholder="Prix"
                     value={sa.prix}
                     onChange={(e) =>
                       handleSousActeChange(index, "prix", e.target.value)
@@ -193,7 +268,6 @@ export default function ActesPage() {
                     className="w-32"
                   />
 
-                  {/* Supprimer */}
                   <Button
                     type="button"
                     variant="outline"
@@ -216,15 +290,486 @@ export default function ActesPage() {
               </Button>
             </div>
 
-            {/* Bouton Enregistrer */}
             <DialogFooter>
-              <Button type="submit" className="text-white" disabled={loading}>
-                {loading ? "Enregistrement en cours..." : "Enregistrer"}
+              <Button type="submit" disabled={loading}>
+                {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* BOUTON MODIFIER */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier</DialogTitle>
+          </DialogHeader>
+
+          {editStep === "choix" && (
+            <div className="space-y-4">
+              <p>Que voulez-vous modifier ?</p>
+              <div className="flex flex-col gap-2">
+                <Button onClick={() => { setEditStep("acte"); setEditDesc(editTarget.Desc_Actes); }}>
+                  Acte
+                </Button>
+                <Button onClick={() => setEditStep("sous-acte")}>
+                  Sous-acte
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {editStep === "acte" && (
+            <form
+              className="space-y-4 mt-4"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                try {
+                  const res = await fetch(`/api/admin/actes/${editTarget.ID_Actes}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ Desc_Actes: editDesc }),
+                  });
+                  if (res.ok) {
+                    Swal.fire("Succès", "Acte modifié avec succès", "success");
+                    setEditOpen(false);
+                    const updated = await fetch("/api/admin/actes").then(r => r.json());
+                    setActes(updated);
+                  }
+                } catch (err) {
+                  console.error(err);
+                  Swal.fire("Erreur", "Impossible de modifier l’acte", "error");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              <Label>Nom de l'acte</Label>
+              <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditStep("choix")}
+                >
+                  Retour
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Modifications..." : "Modifier"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+
+          {editStep === "sous-acte" && (
+            <form
+              className="space-y-4 mt-4"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                try {
+                  const res = await fetch(`/api/admin/actes/sous-actes`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ids: selectedSousActes }),
+                  });
+                  if (res.ok) {
+                    Swal.fire("Succès", "Sous-acte(s) modifié(s) avec succès", "success");
+                    setEditOpen(false);
+                    const updated = await fetch("/api/admin/actes").then(r => r.json());
+                    setActes(updated);
+                  }
+                } catch (err) {
+                  console.error(err);
+                  Swal.fire("Erreur", "Impossible de modifier les sous-actes", "error");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              <Label>Choisir les sous-actes à modifier</Label>
+              <div className="flex flex-col gap-2 max-h-40 overflow-y-auto border p-2 rounded">
+                {editTarget.sous_actes.map((s: any) => (
+                  <label key={s.ID_SActes} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      value={s.ID_SActes}
+                      checked={selectedSousActes.includes(s.ID_SActes)}
+                      onChange={(e) => {
+                        const id = s.ID_SActes;
+                        setSelectedSousActes((prev) =>
+                          e.target.checked ? [...prev, id] : prev.filter((i) => i !== id)
+                        );
+                      }}
+                    />
+                    {s.Desc_SActes} — {s.Prix} Ar
+                  </label>
+                ))}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditStep("choix")}
+                >
+                  Retour
+                </Button>
+                <Button
+                  type="button"
+                  disabled={selectedSousActes.length === 0}
+                  onClick={() => {
+                    // Récupérer les sous-actes choisis
+                    const data = editTarget.sous_actes
+                      .filter((s: any) => selectedSousActes.includes(s.ID_SActes))
+                      .map((s: any) => ({ ID: s.ID_SActes, nom: s.Desc_SActes, prix: s.Prix }));
+                    setSelectedSousActesData(data);
+                    setEditStep("sous-actes-form");
+                  }}
+                >
+                  Suivant
+                </Button>
+
+                {/* <Button type="submit" disabled={loading || selectedSousActes.length === 0}>
+                  {loading ? "Modifications..." : "Modifier"}
+                </Button> */}
+              </DialogFooter>
+            </form>
+          )}
+
+          {editStep === "sous-actes-form" && (
+            <form
+              className="space-y-4 mt-4"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                try {
+                  const res = await fetch(`/api/admin/actes/sous-actes`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      sous_actes: selectedSousActesData.map((s) => ({
+                        ID_SActes: s.ID,
+                        Desc_SActes: s.nom,
+                        Prix: s.prix,
+                      })),
+                    }),
+                  });
+                  if (res.ok) {
+                    Swal.fire("Succès", "Sous-acte(s) modifié(s) avec succès", "success");
+                    setEditOpen(false);
+                    const updated = await fetch("/api/admin/actes").then(r => r.json());
+                    setActes(updated);
+                  }
+                } catch (err) {
+                  console.error(err);
+                  Swal.fire("Erreur", "Impossible de modifier les sous-actes", "error");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              <Label>Modification de sous-acte</Label>
+              {selectedSousActesData.map((s, index) => (
+                <div key={s.ID} className="flex items-center gap-2">
+                  <Input
+                    className="flex-1"
+                    value={s.nom}
+                    onChange={(e) => {
+                      const newData = [...selectedSousActesData];
+                      newData[index].nom = e.target.value;
+                      setSelectedSousActesData(newData);
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    className="w-32"
+                    value={s.prix}
+                    onChange={(e) => {
+                      const newData = [...selectedSousActesData];
+                      newData[index].prix = parseFloat(e.target.value) || 0;
+                      setSelectedSousActesData(newData);
+                    }}
+                  />
+                </div>
+              ))}
+
+              <DialogFooter className="flex justify-between">
+                <Button type="button" variant="outline" onClick={() => setEditStep("sous-acte")}>
+                  Retour
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Modifications..." : "Modifier"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+
+        </DialogContent>
+      </Dialog>
+
+      {/* BOUTON SUPPRIMER */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Supprimer</DialogTitle>
+          </DialogHeader>
+
+          {/* ÉTAPE 1 : CHOIX */}
+          {deleteStep === "choix" && (
+            <div className="space-y-4">
+              <p>Que voulez-vous supprimer ?</p>
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeleteStep("acte")}
+                >
+                  Acte
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteStep("sous-acte")}
+                >
+                  Sous-acte
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ÉTAPE 2 : SUPPRESSION ACTE */}
+          {deleteStep === "acte" && (
+            <div className="space-y-4">
+              <p>
+                Voulez-vous vraiment supprimer l’acte :
+                <strong className="block mt-1 text-red-600">
+                  {deleteTarget.Desc_Actes}
+                </strong>
+              </p>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteStep("choix")}
+                >
+                  Retour
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  disabled={deleteLoading}
+                  onClick={async () => {
+                    setDeleteLoading(true);
+                    try {
+                      const res = await fetch(
+                        `/api/admin/actes/${deleteTarget.ID_Actes}`,
+                        { method: "DELETE" }
+                      );
+
+                      if (res.ok) {
+                        Swal.fire("Supprimé", "Acte supprimé avec succès", "success");
+                        setDeleteOpen(false);
+                        setActes(await fetch("/api/admin/actes").then(r => r.json()));
+                      }
+                    } catch (e) {
+                      Swal.fire("Erreur", "Suppression impossible", "error");
+                    } finally {
+                      setDeleteLoading(false);
+                    }
+                  }}
+                >
+                  {deleteLoading ? "Suppression..." : "Supprimer"}
+                </Button>
+
+              </DialogFooter>
+            </div>
+          )}
+
+          {/* ÉTAPE 3 : SUPPRESSION SOUS-ACTES */}
+          {deleteStep === "sous-acte" && (
+            <div className="space-y-4">
+              <Label>Choisir les sous-actes à supprimer</Label>
+
+              <div className="max-h-40 overflow-y-auto border rounded p-2 space-y-2">
+                {deleteTarget.sous_actes.map((s: any) => (
+                  <label key={s.ID_SActes} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedSousActesToDelete.includes(s.ID_SActes)}
+                      onChange={(e) => {
+                        const id = s.ID_SActes;
+                        setSelectedSousActesToDelete((prev) =>
+                          e.target.checked
+                            ? [...prev, id]
+                            : prev.filter((i) => i !== id)
+                        );
+                      }}
+                    />
+                    {s.Desc_SActes} — {s.Prix} Ar
+                  </label>
+                ))}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteStep("choix")}
+                >
+                  Retour
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  disabled={selectedSousActesToDelete.length === 0 || deleteLoading}
+                  onClick={async () => {
+                    setDeleteLoading(true);
+                    try {
+                      const res = await fetch(
+                        `/api/admin/actes/sous-actes`,
+                        {
+                          method: "DELETE",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ ids: selectedSousActesToDelete }),
+                        }
+                      );
+
+                      if (res.ok) {
+                        Swal.fire(
+                          "Supprimé",
+                          "Sous-acte(s) supprimé(s)",
+                          "success"
+                        );
+                        setDeleteOpen(false);
+                        setActes(await fetch("/api/admin/actes").then(r => r.json()));
+                      }
+                    } catch (e) {
+                      Swal.fire("Erreur", "Suppression impossible", "error");
+                    } finally {
+                      setDeleteLoading(false);
+                    }
+                  }}
+                >
+                  {deleteLoading ? "Suppression..." : "Supprimer"}
+                </Button>
+
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+
+
+      {/* 📌 TABLEAU STATIQUE STYLISÉ */}
+      <div className="mt-8">
+        {/* <h2 className="text-lg font-semibold mb-3">Liste des actes</h2> */}
+
+        <div className="rounded-lg border shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">Département</th>
+                <th className="px-4 py-3 text-left font-medium">Acte</th>
+                <th className="px-4 py-3 text-left font-medium">Sous-Actes</th>
+                <th className="px-4 py-3 text-center font-medium w-12">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {Object.keys(actesParDepartement).length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center py-6 text-gray-500">
+                    Aucun acte disponible
+                  </td>
+                </tr>
+              ) : (
+                Object.entries(actesParDepartement).map(
+                  ([nomDep, actesDep]: any, depIndex) =>
+                    actesDep.map((acte: any, acteIndex: number) => (
+                      <tr
+                        key={`${depIndex}-${acteIndex}`}
+                        className="hover:bg-gray-50"
+                      >
+                        {/* Département (affiché une seule fois) */}
+                        {acteIndex === 0 && (
+                          <td
+                            rowSpan={actesDep.length}
+                            className="px-4 py-3 border-t font-semibold align-top bg-gray-50"
+                          >
+                            {nomDep}
+                          </td>
+                        )}
+
+                        {/* Acte */}
+                        <td className="px-4 py-3 border-t font-medium">
+                          {acte.Desc_Actes}
+                        </td>
+
+                        {/* Sous-actes regroupés */}
+                        <td className="px-4 py-3 border-t">
+                          {acte.sous_actes.length === 0 ? (
+                            <span className="text-xs text-gray-400">
+                              Aucun sous-acte
+                            </span>
+                          ) : (
+                            <ul className="space-y-1">
+                              {acte.sous_actes.map((s: any) => (
+                                <li
+                                  key={s.ID_SActes}
+                                  className="text-sm text-gray-700"
+                                >
+                                  • {s.Desc_SActes} —{" "}
+                                  <span className="font-medium">{s.Prix} Ar</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </td>
+                        {/* Actions */}
+                        <td className="px-2 py-3 border-t text-center align-top">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <Ellipsis className="h-5 w-5 text-gray-600" />
+                              </Button>
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent align="end" className="w-36">
+                              <DropdownMenuItem
+                                onClick={() => handleEditActe(acte)}
+                                className="cursor-pointer"
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Modifier
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteClick(acte)}
+                                className="cursor-pointer text-red-600 focus:text-red-600"
+                              >
+                                <Trash className="mr-2 h-4 w-4" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                )
+              )}
+            </tbody>
+
+
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 }

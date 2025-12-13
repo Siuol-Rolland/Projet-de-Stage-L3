@@ -15,24 +15,37 @@ export async function GET() {
         id_Paie: { not: null }, // uniquement les réalisations payées
       },
       include: {
-        etudiant: true,
+        etudiant: {
+          include: {
+            departement: true, // ✅ AJOUTÉ : pour récupérer le département !
+          },
+        },
         sousActe: true,
         paiement: true,
       },
       orderBy: { Date_Realise: "desc" },
     });
 
+    // ✅ FORMATTAGE : on renvoie année & département au frontend
     const formatted = paiements.map((r) => ({
       ID_Realisation: r.ID_Realisation,
       Nom_Etudiant: r.etudiant.FullName_Et,
+
+      // 🔥 AJOUTÉS : maintenant utilisables dans le filtre !
+      annee: r.etudiant.Annee_Et || null,
+      departement: r.etudiant.departement?.Nom_Dep || null,
+
+
       Montant_Restant: r.paiement?.Montant_Restant ?? 0,
       Note: r.Note,
+
       sousActe: r.sousActe
         ? {
             Desc_SActes: r.sousActe.Desc_SActes,
             Prix: r.sousActe.Prix,
           }
         : undefined,
+
       paiement: r.paiement
         ? {
             ID_Paie: r.paiement.ID_Paie,
@@ -49,6 +62,7 @@ export async function GET() {
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
+
 
 
 
