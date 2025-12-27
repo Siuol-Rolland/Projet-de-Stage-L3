@@ -32,6 +32,10 @@ export default function DepartmentPage() {
   const [viewOpen, setViewOpen] = useState(false);
   const [viewData, setViewData] = useState<any>(null);
 
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [depToDelete, setDepToDelete] = useState<any>(null);
+
+
 
   useEffect(() => {
     fetchDepartments();
@@ -146,7 +150,7 @@ export default function DepartmentPage() {
   const handleDelete = (dep: any) => {
     Swal.fire({
       title: "Supprimer ?",
-      text: `Voulez-vous supprimer "${dep.Nom_Dep}" ?`,
+      text: `Voulez-vous supprimer "${dep.Nom_Dep}" et tout ce qui lui est lié ?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#e63946",
@@ -155,12 +159,27 @@ export default function DepartmentPage() {
       cancelButtonText: "Annuler",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await fetch(`/api/admin/department/${dep.ID_Dep}`, { method: "DELETE" });
-        Swal.fire("Supprimé!", "", "success");
-        fetchDepartments();
+        try {
+          const res = await fetch(`/api/admin/department/${dep.ID_Dep}/delete`, {
+            method: "DELETE",
+          });
+
+          if (!res.ok) {
+            const data = await res.json();
+            Swal.fire("Erreur", data.message || "Impossible de supprimer le département", "error");
+            return;
+          }
+
+          Swal.fire("Supprimé !", "Le département a été supprimé avec succès.", "success");
+          fetchDepartments(); // Actualiser la liste après suppression
+        } catch (error) {
+          console.error("DELETE DEPARTMENT ERROR:", error);
+          Swal.fire("Erreur", "Problème réseau ou serveur", "error");
+        }
       }
     });
   };
+
 
   return (
     <div className="p-6 space-y-6">
@@ -267,14 +286,16 @@ export default function DepartmentPage() {
 
                           <button
                             className="w-full px-4 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50"
-                            onClick={() => handleDelete(dep)}
+                            onClick={() => {
+                              setDepToDelete(dep);
+                              setDeleteOpen(true);
+                              setEllipsisIndex(null);
+                            }}
                           >
                             <Trash size={16} /> Supprimer
                           </button>
                         </div>
                       )}
-
-
                     </td>
                   </tr>
                 ))}
@@ -341,6 +362,69 @@ export default function DepartmentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Suppression */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Supprimer le département ?</DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4">
+            <p>
+              Voulez-vous vraiment supprimer <strong>{depToDelete?.Nom_Dep}</strong> et tout ce qui lui est lié ?
+            </p>
+          </div>
+
+          <DialogFooter className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(false)}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+            <Button
+              className="bg-red-600 text-white"
+              onClick={async () => {
+                if (!depToDelete) return;
+                setLoading(true);
+                try {
+                  const res = await fetch(`/api/admin/department/${depToDelete.ID_Dep}/delete`, {
+                    method: "DELETE",
+                  });
+
+                  if (!res.ok) {
+                    const data = await res.json();
+                    Swal.fire("Erreur", data.message || "Impossible de supprimer le département", "error");
+                    return;
+                  }
+
+                  // ✅ Message succès Swal
+                  Swal.fire({
+                    icon: "success",
+                    title: "Supprimé !",
+                    text: `Le département "${depToDelete.Nom_Dep}" a été supprimé avec succès.`,
+                    timer: 1500,
+                    showConfirmButton: false,
+                  });
+
+                  fetchDepartments(); // Actualiser la liste
+                  setDeleteOpen(false); // Fermer le modal
+                } catch (error) {
+                  console.error(error);
+                  Swal.fire("Erreur", "Problème réseau ou serveur", "error");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              {loading ? "Suppression..." : "Supprimer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

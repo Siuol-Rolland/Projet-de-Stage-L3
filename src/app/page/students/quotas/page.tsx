@@ -13,6 +13,10 @@ import {
 import Swal from "sweetalert2";
 import { MoreHorizontal } from "lucide-react";
 
+import { QuotaHeaderSkeleton } from "@/components/students/skeletons/QuotaHeaderSkeleton";
+import { QuotaListSkeleton } from "@/components/students/skeletons/QuotaListSkeleton";
+import { CalendarSkeleton } from "@/components/students/skeletons/CalendarSkeleton";
+
 export default function EtQuotasPage() {
   const [etudiant, setEtudiant] = useState<any>(null);
   const [quotas, setQuotas] = useState<any[]>([]);
@@ -262,7 +266,23 @@ const displayedList =
 
   const totalActes = actes.reduce((sum, a) => sum + a.nombre, 0);
 
-  if (!etudiant) return <p>Chargement...</p>;
+  if (isLoading || !etudiant) {
+  return (
+    <main className="flex flex-col lg:flex-row gap-6 p-6">
+      {/* LISTE DES QUOTAS */}
+      <section className="bg-white dark:bg-primary-foreground rounded-2xl p-6 shadow-sm border flex-1 lg:w-[60%]">
+        <QuotaHeaderSkeleton />
+        <QuotaListSkeleton />
+      </section>
+
+      {/* 🗓️ CALENDRIER */}
+      <aside className="flex flex-col gap-6 lg:w-[25%]">
+        <CalendarSkeleton />
+      </aside>
+    </main>
+  );
+}
+
   
   const selectedRealisations =
   selectedActe !== null

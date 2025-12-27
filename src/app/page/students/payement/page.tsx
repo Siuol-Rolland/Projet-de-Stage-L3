@@ -18,6 +18,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
+import { PaiementTableSkeleton } from "@/components/students/skeletons/PaiementTableSkeleton";
+import { DetteSkeleton } from "@/components/students/skeletons/DetteSkeleton";
+import { TitleSkeleton } from "@/components/students/skeletons/TitleSkeleton";
+import { LabelSkeleton } from "@/components/students/skeletons/LabelSkeleton";
+
 
 interface Paiement {
   ID_Realisation: number;
@@ -40,25 +45,43 @@ export default function EtPayementPage() {
   const [selectedPaiement, setSelectedPaiement] = useState<Paiement | null>(null);
   const [montant, setMontant] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [detteTotale, setDetteTotale] = useState<number>(0);
+
 
   useEffect(() => {
-    fetch("/api/students/payement")
-      .then((res) => res.json())
-      // .then((data: Paiement[]) => {
-      //   const evalues = data.filter((p) => p.Note !== null);
-      //   setPaiements(evalues);
-      // });
-      .then((data) => {
-      if (!Array.isArray(data)) {
-        console.error("Réponse invalide :", data);
-        return;
+    const loadData = async () => {
+      try {
+        setIsPageLoading(true);
+
+        const [paiementRes, detteRes] = await Promise.all([
+          fetch("/api/students/payement"),
+          fetch("/api/students/dette"),
+        ]);
+
+        const paiementsData = await paiementRes.json();
+        const detteData = await detteRes.json();
+
+        if (Array.isArray(paiementsData)) {
+          const evalues = paiementsData.filter((p) => p.Note !== null);
+          setPaiements(evalues);
+        }
+
+        if (typeof detteData.dette === "number") {
+          setDetteTotale(detteData.dette);
+        }
+      } catch (error) {
+        console.error("Erreur chargement page :", error);
+      } finally {
+        setIsPageLoading(false); // ⭐ TOUT s’arrête ici
       }
+    };
 
-      const evalues = data.filter((p) => p.Note !== null);
-      setPaiements(evalues);
-    })
-
+    loadData();
   }, []);
+
+
+
 
   const openPayerDialog = (p: Paiement) => {
   if (p.paiement?.Statut_Paie === "TOTAL") {
@@ -106,6 +129,11 @@ export default function EtPayementPage() {
               : p
           )
         );
+
+        if (typeof data.dette === "number") {
+          setDetteTotale(data.dette);
+        }
+
         setOpenDialog(false);
         Swal.fire({
           icon: "success",
@@ -127,50 +155,82 @@ export default function EtPayementPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Payement des sous-actes réalisés & Évaluation</h1>
+      {/* En-tête avec titre et dette totale */}
+      <div className="flex justify-between items-center mb-4">
+        {isPageLoading ? (
+          <TitleSkeleton />
+        ) : (
+          <h1 className="text-xl font-semibold">
+            Payement des sous-actes réalisés & Évalués
+          </h1>
+        )}
+
+        <div className="p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm flex items-center gap-2">
+          {isPageLoading ? (
+            <>
+              <LabelSkeleton />
+              <DetteSkeleton />
+            </>
+          ) : (
+            <>
+              <span className="font-medium">Dette totale :</span>
+              <span className="font-bold text-lg">
+                {detteTotale.toLocaleString()} Ar
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+
+      
 
       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-        <table className="min-w-full text-left">
-          <thead className="bg-gray-100 border-b">
-            <tr>
-              <th className="px-4 py-3 font-medium text-gray-700">Sous-actes</th>
-              <th className="px-4 py-3 font-medium text-gray-700">Note</th>
-              <th className="px-4 py-3 font-medium text-gray-700">Prix unitaire</th>
-              <th className="px-4 py-3 font-medium text-gray-700">Montant payé</th>
-              <th className="px-4 py-3 font-medium text-gray-700">Montant restant</th>
-              <th className="px-4 py-3 font-medium text-gray-700">Date paiement</th>
-              <th className="px-4 py-3 font-medium text-gray-700">Statut</th>
-              <th className="px-4 py-3 font-medium text-gray-700 text-center"></th>
-            </tr>
-          </thead>
+        {isPageLoading ? (
+            <PaiementTableSkeleton />
+          ) : (
+            <table className="min-w-full text-left">
+              <thead className="bg-gray-100 border-b">
+                <tr>
+                  <th className="px-4 py-3 font-medium text-gray-700">Sous-actes</th>
+                  <th className="px-4 py-3 font-medium text-gray-700">Note</th>
+                  <th className="px-4 py-3 font-medium text-gray-700">Prix unitaire</th>
+                  <th className="px-4 py-3 font-medium text-gray-700">Montant payé</th>
+                  <th className="px-4 py-3 font-medium text-gray-700">Montant restant</th>
+                  <th className="px-4 py-3 font-medium text-gray-700">Date paiement</th>
+                  <th className="px-4 py-3 font-medium text-gray-700">Statut</th>
+                  <th className="px-4 py-3 font-medium text-gray-700 text-center"></th>
+                </tr>
+              </thead>
 
-          <tbody>
-            {paiements.map((p) => (
-              <tr key={p.ID_Realisation} className="border-b hover:bg-gray-50 transition">
-                <td className="px-4 py-3">{p.sousActe?.Desc_SActes}</td>
-                <td className="px-4 py-3">{p.Note ?? "—"}/20</td>
-                <td className="px-4 py-3">{p.sousActe?.Prix} Ar</td>
-                <td className="px-4 py-3">{p.paiement ? `${p.paiement.Montant} Ar` : "—"}</td>
-                <td className="px-4 py-3">{p.Montant_Restant} Ar</td>
-                <td className="px-4 py-3">
-                  {p.paiement ? new Date(p.paiement.Date_Paie).toLocaleDateString() : "—"}
-                </td>
-                <td className="px-4 py-3">{p.paiement?.Statut_Paie || "—"}</td>
-                <td className="px-4 py-3 text-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <Ellipsis className="cursor-pointer" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => openPayerDialog(p)}>Payer</DropdownMenuItem>
-                      {/* <DropdownMenuItem className="text-red-500">Supprimer</DropdownMenuItem> */}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              <tbody>
+                {paiements.map((p) => (
+                  <tr key={p.ID_Realisation} className="border-b hover:bg-gray-50 transition">
+                    <td className="px-4 py-3">{p.sousActe?.Desc_SActes}</td>
+                    <td className="px-4 py-3">{p.Note ?? "—"}/20</td>
+                    <td className="px-4 py-3">{p.sousActe?.Prix} Ar</td>
+                    <td className="px-4 py-3">{p.paiement ? `${p.paiement.Montant} Ar` : "—"}</td>
+                    <td className="px-4 py-3">{p.Montant_Restant} Ar</td>
+                    <td className="px-4 py-3">
+                      {p.paiement ? new Date(p.paiement.Date_Paie).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="px-4 py-3">{p.paiement?.Statut_Paie || "—"}</td>
+                    <td className="px-4 py-3 text-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <Ellipsis className="cursor-pointer" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => openPayerDialog(p)}>Payer</DropdownMenuItem>
+                          {/* <DropdownMenuItem className="text-red-500">Supprimer</DropdownMenuItem> */}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        }
       </div>
 
       {/* Dialog de paiement */}

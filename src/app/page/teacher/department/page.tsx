@@ -1,66 +1,66 @@
-// "use client"
-
-// import React from 'react'
-
-// export default function TeachDepartmentPage() {
-//   return (
-//     <div>TeachDepartmentPage</div>
-//   )
-// }
-
-// "use client";
-
-// import React, { useEffect, useState } from "react";
-
-// export default function TeachDepartmentPage() {
-//   const [departments, setDepartments] = useState<any[]>([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     async function fetchDepartments() {
-//       try {
-//         const res = await fetch("/api/teacher/department");
-//         if (!res.ok) throw new Error("Erreur lors du chargement");
-//         const data = await res.json();
-//         setDepartments(data);
-//       } catch (error) {
-//         console.error(error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     }
-
-//     fetchDepartments();
-//   }, []);
-
-//   if (loading) return <p className="text-center p-4">Chargement...</p>;
-
-//   if (departments.length === 0)
-//     return <p className="text-center p-4">Aucun département trouvé.</p>;
-
-//   return (
-//     <div className="p-6">
-//       <h1 className="text-2xl font-bold mb-4 text-blue-600">
-//         Mes Départements
-//       </h1>
-
-//       <ul className="space-y-2">
-//         {departments.map((dep) => (
-//           <li
-//             key={dep.ID_Dep}
-//             className="border rounded-lg p-3 shadow-sm hover:shadow-md transition"
-//           >
-//             <span className="font-semibold">{dep.Nom_Dep}</span>
-//           </li>
-//         ))}
-//       </ul>
-//     </div>
-//   );
-// }
-
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Eye } from "lucide-react";
+
+
+function DepartmentSkeletonTable() {
+  return (
+    <div className="overflow-hidden border rounded-lg">
+      <table className="w-full">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="px-4 py-3 text-left">Département</th>
+            <th className="px-4 py-3 text-left">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <tr key={i} className="border-t">
+              <td className="px-4 py-3">
+                <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+
+
+function ActesSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="border rounded-lg p-3 bg-gray-50"
+        >
+          <div className="h-5 w-64 bg-gray-200 rounded mb-3 animate-pulse"></div>
+
+          <div className="space-y-2">
+            {[1, 2, 3].map((j) => (
+              <div
+                key={j}
+                className="flex justify-between"
+              >
+                <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 
 export default function TeachDepartmentPage() {
   const [departments, setDepartments] = useState<any[]>([]);
@@ -103,25 +103,62 @@ export default function TeachDepartmentPage() {
     }
   };
 
-  if (loading) return <p className="text-center p-4">Chargement...</p>;
+  if (loading) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4 text-blue-600">
+          Mes Départements
+        </h1>
+        <DepartmentSkeletonTable />
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4 text-blue-600">
+      <h1 className="text-2xl font-bold mb-4 ">
         Mes Départements
       </h1>
 
-      <ul className="space-y-2">
-        {departments.map((dep) => (
-          <li
-            key={dep.ID_Dep}
-            onClick={() => handleOpenModal(dep)}
-            className="border rounded-lg p-3 shadow-sm hover:shadow-md transition cursor-pointer"
-          >
-            <span className="font-semibold">{dep.Nom_Dep}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="overflow-hidden border rounded-lg shadow-sm">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100 text-gray-700">
+            <tr>
+              <th className="px-4 py-3 text-left">Nom du département</th>
+              <th className="px-4 py-3 text-left">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {departments.map((dep) => (
+              <tr
+                key={dep.ID_Dep}
+                className="border-t hover:bg-gray-50 transition"
+              >
+                <td className="px-4 py-3 font-semibold text-gray-800">
+                  {dep.Nom_Dep}
+                </td>
+
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleOpenModal(dep)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium
+                              text-blue-600 border border-blue-600 rounded-lg
+                              hover:bg-blue-50 focus:outline-none focus:ring-2
+                              focus:ring-blue-400"
+                  >
+                    <Eye size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -139,7 +176,7 @@ export default function TeachDepartmentPage() {
             </div>
 
             {loadingActes ? (
-              <p>Chargement des actes...</p>
+              <ActesSkeleton />
             ) : actes.length === 0 ? (
               <p>Aucun acte trouvé pour ce département.</p>
             ) : (
@@ -158,21 +195,12 @@ export default function TeachDepartmentPage() {
                           key={sa.ID_SActes}
                           className="border-b border-gray-200 pb-1"
                         >
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span>{sa.Desc_SActes}</span>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm font-medium text-gray-700">
                               {sa.Prix} Ar
                             </span>
                           </div>
-                          <span
-                            className={`text-xs ${
-                              sa.Statut_Valide ? "text-green-600" : "text-red-500"
-                            }`}
-                          >
-                            {sa.Statut_Valide
-                              ? "Validé"
-                              : "Non validé"}
-                          </span>
                         </li>
                       ))}
                     </ul>

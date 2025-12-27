@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import Swal from "sweetalert2";
+import EvaluationTableSkeleton from "@/components/teacher/skeletons/EvaluationTableSkeleton";
+
 
 
 interface Evaluation {
@@ -177,7 +179,22 @@ export default function StudentEvaluationPage() {
   return (
     <div className="p-6">
       {loadingData ? (
-        <p>Chargement des étudiants...</p>
+        <>
+          {/* Skeleton des boutons */}
+          <div className="flex justify-between mb-4">
+            <div className="h-10 w-28 bg-gray-200 animate-pulse rounded-md" />
+            <div className="h-10 w-24 bg-gray-200 animate-pulse rounded-md" />
+          </div>
+
+          {/* Skeleton du titre */}
+          <div className="mb-4 text-center space-y-2">
+            <div className="h-5 w-64 mx-auto bg-gray-200 animate-pulse rounded" />
+            <div className="h-4 w-80 mx-auto bg-gray-200 animate-pulse rounded" />
+          </div>
+
+          {/* Skeleton du tableau */}
+          <EvaluationTableSkeleton />
+        </>
       ) : (
         <>
           {/* --- Boutons --- */}

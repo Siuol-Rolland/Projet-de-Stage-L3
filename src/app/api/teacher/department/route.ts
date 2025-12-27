@@ -1,7 +1,7 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { PrismaClient } from "../../../../../generated/prisma";
+
 import { createClient } from "@/utils/supabase/server";
 
 import { prisma } from "@/lib/db/db";
