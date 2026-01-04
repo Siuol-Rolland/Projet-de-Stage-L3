@@ -183,50 +183,65 @@ export default function DepartmentPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-xl font-bold">Départements</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Titre + description */}
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+            Départements
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Gestion des départements
+          </p>
+        </div>
 
-      {/* Modal Ajout */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="flex items-center gap-2" variant="outline">
-            <CirclePlus size={18} /> Ajouter un département
-          </Button>
-        </DialogTrigger>
+        {/* Bouton Ajouter et Modal Ajout */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="bg-[#44adc9] text-white hover:bg-[#3b9ab3]
+                        rounded-xl shadow-sm flex items-center gap-2"
+            >
+              <CirclePlus size={18} />
+              Ajouter un département
+            </Button>
+          </DialogTrigger>
 
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ajouter un département</DialogTitle>
-          </DialogHeader>
+          <DialogContent className="sm:max-w-md rounded-2xl border border-slate-100 shadow-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold tracking-tight text-slate-800">Ajouter un département</DialogTitle>
+            </DialogHeader>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <Label>Nom du département</Label>
-              <Input
-                placeholder="Ex: Chirurgie Dentaire"
-                value={nomDep}
-                onChange={(e) => setNomDep(e.target.value)}
-              />
-            </div>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div>
+                <Label>Nom du département</Label>
+                <Input
+                  className="mt-3"
+                  placeholder="Ex: Chirurgie Dentaire"
+                  value={nomDep}
+                  onChange={(e) => setNomDep(e.target.value)}
+                />
+              </div>
 
-            <DialogFooter>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Enregistrement..." : "Enregistrer"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Tableau */}
       <div className="mt-4">
         {departements.length === 0 ? (
           <p className="text-gray-500 italic">Aucun département ajouté pour le moment.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-100 border-b">
+              <thead className="bg-[#f8fafc] border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
                     Nom du département
                   </th>
                   <th></th>
@@ -237,7 +252,8 @@ export default function DepartmentPage() {
                 {departements.map((dep, index) => (
                   <tr
                     key={dep.ID_Dep}
-                    className="border-b hover:bg-gray-50 transition relative"
+                    className="border-b border-slate-100
+             hover:bg-[#44adc9]/5 transition relative"
                   >
                     <td className="px-6 py-3">{dep.Nom_Dep}</td>
 
@@ -247,7 +263,8 @@ export default function DepartmentPage() {
                         onClick={() =>
                           setEllipsisIndex(ellipsisIndex === index ? null : index)
                         }
-                        className="p-2 rounded hover:bg-gray-200 transition"
+                        className="p-2 rounded-lg hover:bg-[#44adc9]/10
+                        transition text-slate-600"
                       >
                         <Ellipsis />
                       </button>
@@ -256,14 +273,15 @@ export default function DepartmentPage() {
                       {ellipsisIndex === index && (
                         <div
                           ref={menuRef}
-                          className={`absolute right-6 w-40 bg-white shadow-xl border rounded-lg z-50
+                          className={`absolute right-6 w-40 bg-white rounded-xl border border-slate-100 shadow-xl z-50
                             ${index >= departements.length - 2
                               ? "bottom-full mb-2 animate-in fade-in slide-in-from-bottom-2"
                               : "mt-2 animate-in fade-in slide-in-from-top-2"
                             }`}
                         >
                           <button
-                            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-100"
+                            className="w-full px-4 py-2 flex items-center gap-2
+                                      text-sm text-slate-700 hover:bg-slate-50"
                             onClick={() => {
                               handleView(dep);
                               setEllipsisIndex(null);
@@ -273,7 +291,8 @@ export default function DepartmentPage() {
                           </button>
 
                           <button
-                            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-100"
+                            className="w-full px-4 py-2 flex items-center gap-2
+                                      text-sm text-slate-700 hover:bg-slate-50"
                             onClick={() => {
                               setSelectedDep(dep);
                               setEditNomDep(dep.Nom_Dep);
@@ -285,7 +304,9 @@ export default function DepartmentPage() {
                           </button>
 
                           <button
-                            className="w-full px-4 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50"
+                            className="w-full px-4 py-2 flex items-center gap-2
+                                      text-sm text-rose-500 hover:bg-rose-50
+"
                             onClick={() => {
                               setDepToDelete(dep);
                               setDeleteOpen(true);
@@ -325,10 +346,10 @@ export default function DepartmentPage() {
                   <p className="text-gray-500 italic">Aucun acte dans ce département.</p>
                 ) : (
                   viewData.actes.map((acte: any) => (
-                    <div key={acte.ID_Actes} className="border p-3 rounded-lg">
+                    <div key={acte.ID_Actes} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                       <p className="font-semibold">• {acte.Desc_Actes}</p>
 
-                      <ul className="list-disc ml-6 text-sm mt-1">
+                      <ul className="list-disc ml-6 text-sm text-slate-500 mt-2">
                         {acte.sous_actes.map((sa: any) => (
                           <li key={sa.ID_SActes}>{sa.Desc_SActes}</li>
                         ))}
