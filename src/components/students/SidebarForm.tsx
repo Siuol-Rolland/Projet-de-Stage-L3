@@ -53,13 +53,13 @@ export default function SidebarForm() {
             <LayoutDashboard className='w-5 h-5'/>
             <span>Tableau de bord</span>
           </Link>
-          <Link
+          {/* <Link
             href="/page/students/department"
             className='flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:text-white hover:bg-primary/90 transition'
           >
             <Hospital className='w-5 h-5'/>
             <span> Département </span>
-          </Link>
+          </Link> */}
           <Link
             href="/page/students/quotas"
             className='flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:text-white hover:bg-primary/90 transition'

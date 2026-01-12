@@ -57,7 +57,7 @@ export default function AdminPage() {
             <div className="relative z-10 flex items-center justify-between">
               <div className="max-w-lg text-white">
                 <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                  Bonjour, <span className="font-bold">Shabrina</span>
+                  Bonjour, <span className="font-bold">AdminPage</span>
                 </h1>
                 <p className="mt-2 text-lg font-light text-white/90">
                   Bienvenue dans votre tableau de bord administrateur !

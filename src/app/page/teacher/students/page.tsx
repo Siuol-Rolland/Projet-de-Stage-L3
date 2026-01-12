@@ -204,19 +204,32 @@ export default function StudentEvaluationPage() {
               <Button
                 variant="outline"
                 onClick={() => setFilterOpen(!filterOpen)}
-                className="flex items-center gap-2"
+                className="
+                  flex items-center gap-2
+                  rounded-xl
+                  border-slate-200
+                  bg-white
+                  hover:bg-slate-50
+                  shadow-sm
+                "
               >
-                <Funnel /> Filtrer
+                <Funnel className="w-4 h-4 text-[#44adc9]"/> Filtrer
               </Button>
 
               {filterOpen && (
                 <div
                   ref={filterRef}
-                  className="absolute left-0 mt-2 w-64 p-4 bg-white border rounded-lg shadow-lg z-10"
+                  className="absolute left-0 mt-3 w-72
+                    bg-white
+                    rounded-2xl
+                    border border-slate-100
+                    shadow-xl
+                    p-5
+                    z-20"
                 >
                   <div className="grid gap-3">
                     {/* Année */}
-                    <label className="text-sm font-medium">Année</label>
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Année</label>
                     <Select
                       value={filters.annee || "all"}
                       onValueChange={(v) =>
@@ -235,7 +248,7 @@ export default function StudentEvaluationPage() {
                     </Select>
 
                     {/* Étudiant */}
-                    <label className="text-sm font-medium">Étudiant</label>
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Étudiant</label>
                     <Select
                       value={filters.nom || "all"}
                       onValueChange={(v) =>
@@ -255,7 +268,7 @@ export default function StudentEvaluationPage() {
                       </SelectContent>
                     </Select>
                     {/* Département */}
-                    <label className="text-sm font-medium">Département</label>
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Département</label>
                     <Select
                       value={filters.departement || "all"}
                       onValueChange={(v) =>
@@ -292,23 +305,37 @@ export default function StudentEvaluationPage() {
             <Button
               disabled={!selected || (selectedStudent && selectedStudent.Note !== null)}
               onClick={() => setShowDialog(true)}
-              className="bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="
+                bg-[#44adc9]
+                text-white
+                rounded-xl
+                px-6
+                shadow-md
+                hover:bg-[#3b9ab4]
+                disabled:opacity-50
+                disabled:cursor-not-allowed
+              "
             >
               Évaluer
             </Button>
           </div>
 
           {/* --- Titre --- */}
-          <div className="mb-4 text-center">
-            <h3 className="text-foreground font-semibold text-lg"> Evaluation des quotas realisé</h3>
-            <p className="text-muted-foreground text-sm"> {titreFiltre}</p>
+          <div className="mb-6 text-center">
+            <h3 className="text-xl font-bold text-slate-800 tracking-tight"> Evaluation des quotas realisé</h3>
+            <p className="mt-1 text-sm text-slate-500 font-medium"> {titreFiltre}</p>
           </div>
 
           {/* --- Tableau --- */}
-          <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+          <div className="overflow-hidden
+                bg-white
+                rounded-2xl
+                border border-slate-100
+                shadow-sm"
+          >
             <table className="min-w-full text-left">
-              <thead className="bg-gray-100 border-b">
-                <tr>
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr className="text-sm text-slate-500 font-semibold">
                   <th className="px-4 py-3">Nom</th>
                   <th className="px-4 py-3">Sous-actes</th>
                   <th className="px-4 py-3">Note</th>
@@ -319,9 +346,12 @@ export default function StudentEvaluationPage() {
                 {filteredEvaluations.map((p) => (
                   <tr
                     key={p.ID_Realisation}
-                    className={`border-b cursor-pointer hover:bg-gray-100 transition ${
-                      selected === p.ID_Realisation ? "bg-blue-100" : ""
-                    }`}
+                    className={`
+                      cursor-pointer
+                      transition
+                      hover:bg-slate-50
+                      ${selected === p.ID_Realisation ? "bg-[#44adc9]/10" : ""}
+                    `}  
                     onClick={() => setSelected(p.ID_Realisation)}
                   >
                     <td className="px-4 py-3">{p.Nom}</td>
@@ -330,7 +360,7 @@ export default function StudentEvaluationPage() {
                       {p.Note !== null && p.Note !== undefined ? (
                         `${p.Note}/20`
                       ) : (
-                        <span className="text-gray-400 italic">Non évalué</span>
+                        <span className="italic text-slate-400 text-sm">Non évalué</span>
                       )}
                     </td>
                     <td className="px-4 py-3">{p.Date_Realise?.split("T")[0]}</td>
@@ -341,9 +371,9 @@ export default function StudentEvaluationPage() {
           </div>
 
           {/* --- Modal --- */}
-          {/* --- Modal --- */}
           <Dialog open={showDialog} onOpenChange={setShowDialog}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-2xl rounded-3xl
+             p-6 shadow-2xl border border-slate-100">
               <DialogHeader>
                 <DialogTitle>Évaluer l'étudiant</DialogTitle>
               </DialogHeader>
@@ -355,14 +385,19 @@ export default function StudentEvaluationPage() {
                   <div className="flex items-start gap-6">
                     <img
                       src={selectedStudent.photoUrl}
-                      className="w-32 h-32 rounded-full object-cover"
+                      className="w-32 h-32 rounded-full object-cover
+                        ring-4 ring-[#44adc9]/20"
                     />
 
                     <div className="flex flex-col gap-3">
 
                       {/* Ligne unique */}
-                      <p className="text-xl font-semibold">
-                        {selectedStudent.Nom} - {selectedStudent.annee} - {selectedStudent.departement}
+                      <p className="text-xl font-bold text-slate-800 tracking-tight">
+                        {selectedStudent.Nom}
+                      </p>
+
+                      <p className="text-sm text-slate-500 font-medium">
+                        {selectedStudent.annee} • {selectedStudent.departement}
                       </p>
 
                       {/* Sous-acte */}
@@ -385,7 +420,9 @@ export default function StudentEvaluationPage() {
                           max={20}
                           value={note ?? selectedStudent.Note ?? ""}
                           onChange={(e) => setNote(Number(e.target.value))}
-                          className="w-60"
+                          className="w-40 rounded-xl border-slate-200
+                          focus:border-[#44adc9]
+                          focus:ring-[#44adc9]/30"
                           disabled={selectedStudent.Note !== null}
                         />
                       </div>
@@ -394,11 +431,14 @@ export default function StudentEvaluationPage() {
                   </div>
 
                   {/* Boutons */}
-                  <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setShowDialog(false)}>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline"  className="rounded-xl" onClick={() => setShowDialog(false)}>
                       Annuler
                     </Button>
-                    <Button onClick={handleSubmit}>
+                    <Button onClick={handleSubmit}
+                            className="bg-[#44adc9] hover:bg-[#3a9bb3]
+                            rounded-xl text-white px-6"
+                    >
                       {loading ? "Chargement..." : "Soumettre"}
                     </Button>
                   </div>

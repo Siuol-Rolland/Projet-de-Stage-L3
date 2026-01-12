@@ -198,112 +198,126 @@ export default function ActesPage() {
 
 
   return (
-    <div className="space-x-2 p-4">
-      <h1 className="text-lg font-bold mb-4">Gestion des Actes</h1>
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+            Actes médicaux
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Gestion des actes et sous-actes par département
+          </p>
+        </div>
+        {/* BOUTON AJOUTER */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="bg-[#44adc9] text-white hover:bg-[#3b9ab3]
+                        rounded-xl shadow-sm flex items-center gap-2"
+            >
+              <CirclePlus size={18} />
+              Ajouter un acte
+            </Button>
+          </DialogTrigger>
 
-      {/* BOUTON AJOUTER */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
-            Ajouter un acte
-            <CirclePlus />
-          </Button>
-        </DialogTrigger>
+          <DialogContent className="sm:max-w-md rounded-2xl border border-slate-100 shadow-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold tracking-tight text-slate-800">Ajouter un acte</DialogTitle>
+            </DialogHeader>
 
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ajouter un acte</DialogTitle>
-          </DialogHeader>
+            <form className="space-y-4 mt-4" onSubmit={handleSubmit}>
+              {/* Département */}
+              <div className="space-y-2">
+                <Label className="text-sm text-slate-600">Département</Label>
+                <Select onValueChange={(val) => setSelectedDep(val)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionnez le département" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departements.map((dep) => (
+                      <SelectItem key={dep.ID_Dep} value={dep.ID_Dep.toString()}>
+                        {dep.Nom_Dep}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <form className="space-y-4 mt-4" onSubmit={handleSubmit}>
-            {/* Département */}
-            <div className="grid gap-3">
-              <Label>Département</Label>
-              <Select onValueChange={(val) => setSelectedDep(val)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionnez le département" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departements.map((dep) => (
-                    <SelectItem key={dep.ID_Dep} value={dep.ID_Dep.toString()}>
-                      {dep.Nom_Dep}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Désignation Acte */}
+              <div className="space-y-2">
+                <Label className="text-sm text-slate-600">Désignation de l'acte</Label>
+                <Input
+                  type="text"
+                  value={descActe}
+                  onChange={(e) => setDescActe(e.target.value)}
+                />
+              </div>
 
-            {/* Désignation Acte */}
-            <div className="grid gap-3">
-              <Label>Désignation de l'acte</Label>
-              <Input
-                type="text"
-                value={descActe}
-                onChange={(e) => setDescActe(e.target.value)}
-              />
-            </div>
+              {/* Sous-actes */}
+              <div className="space-y-2">
+                <Label className="text-sm text-slate-600">Sous-Actes</Label>
+                {sousActes.map((sa, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Input
+                      type="text"
+                      placeholder={`Sous-acte ${index + 1}`}
+                      value={sa.nom}
+                      onChange={(e) =>
+                        handleSousActeChange(index, "nom", e.target.value)
+                      }
+                      className="flex-1"
+                    />
 
-            {/* Sous-actes */}
-            <div className="grid gap-3">
-              <Label>Sous-Actes</Label>
-              {sousActes.map((sa, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    type="text"
-                    placeholder={`Sous-acte ${index + 1}`}
-                    value={sa.nom}
-                    onChange={(e) =>
-                      handleSousActeChange(index, "nom", e.target.value)
-                    }
-                    className="flex-1"
-                  />
+                    <Input
+                      type="number"
+                      placeholder="Prix"
+                      value={sa.prix}
+                      onChange={(e) =>
+                        handleSousActeChange(index, "prix", e.target.value)
+                      }
+                      className="w-32"
+                    />
 
-                  <Input
-                    type="number"
-                    placeholder="Prix"
-                    value={sa.prix}
-                    onChange={(e) =>
-                      handleSousActeChange(index, "prix", e.target.value)
-                    }
-                    className="w-32"
-                  />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="hover:bg-rose-50 text-rose-500"
+                      size="icon"
+                      onClick={() => removeSousActe(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="hover:bg-red-500 hover:text-white"
-                    size="icon"
-                    onClick={() => removeSousActe(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={addSousActe}
+                >
+                  <Plus className="h-4 w-4" /> Ajouter un sous-acte
+                </Button>
+              </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="flex items-center gap-2"
-                onClick={addSousActe}
-              >
-                <Plus className="h-4 w-4" /> Ajouter un sous-acte
-              </Button>
-            </div>
+              <DialogFooter>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-            <DialogFooter>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Enregistrement..." : "Enregistrer"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+
+      
 
       {/* BOUTON MODIFIER */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl border border-slate-100 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Modifier</DialogTitle>
+            <DialogTitle className="text-lg font-bold tracking-tight text-slate-800">Modifier</DialogTitle>
           </DialogHeader>
 
           {editStep === "choix" && (
@@ -346,7 +360,7 @@ export default function ActesPage() {
                 }
               }}
             >
-              <Label>Nom de l'acte</Label>
+              <Label className="text-sm text-slate-600">Nom de l'acte</Label>
               <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
               <DialogFooter>
                 <Button
@@ -389,7 +403,7 @@ export default function ActesPage() {
                 }
               }}
             >
-              <Label>Choisir les sous-actes à modifier</Label>
+              <Label className="text-sm text-slate-600">Choisir les sous-actes à modifier</Label>
               <div className="flex flex-col gap-2 max-h-40 overflow-y-auto border p-2 rounded">
                 {editTarget.sous_actes.map((s: any) => (
                   <label key={s.ID_SActes} className="flex items-center gap-2">
@@ -471,7 +485,7 @@ export default function ActesPage() {
                 }
               }}
             >
-              <Label>Modification de sous-acte</Label>
+              <Label className="text-sm text-slate-600">Modification de sous-acte</Label>
               {selectedSousActesData.map((s, index) => (
                 <div key={s.ID} className="flex items-center gap-2">
                   <Input
@@ -512,9 +526,9 @@ export default function ActesPage() {
 
       {/* BOUTON SUPPRIMER */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl border border-slate-100 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Supprimer</DialogTitle>
+            <DialogTitle className="text-lg font-bold tracking-tight text-slate-800">Supprimer</DialogTitle>
           </DialogHeader>
 
           {/* ÉTAPE 1 : CHOIX */}
@@ -590,7 +604,7 @@ export default function ActesPage() {
           {/* ÉTAPE 3 : SUPPRESSION SOUS-ACTES */}
           {deleteStep === "sous-acte" && (
             <div className="space-y-4">
-              <Label>Choisir les sous-actes à supprimer</Label>
+              <Label className="text-sm text-slate-600">Choisir les sous-actes à supprimer</Label>
 
               <div className="max-h-40 overflow-y-auto border rounded p-2 space-y-2">
                 {deleteTarget.sous_actes.map((s: any) => (
@@ -666,14 +680,14 @@ export default function ActesPage() {
       <div className="mt-8">
         {/* <h2 className="text-lg font-semibold mb-3">Liste des actes</h2> */}
 
-        <div className="rounded-lg border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">Département</th>
-                <th className="px-4 py-3 text-left font-medium">Acte</th>
-                <th className="px-4 py-3 text-left font-medium">Sous-Actes</th>
-                <th className="px-4 py-3 text-center font-medium w-12">Actions</th>
+            <thead className="bg-[#f8fafc] border-b border-slate-100">
+              <tr className="hover:bg-[#44adc9]/5 transition">
+                <th className="px-6 py-3 border-t border-slate-100">Département</th>
+                <th className="px-6 py-3 border-t border-slate-100">Acte</th>
+                <th className="px-6 py-3 border-t border-slate-100">Sous-Actes</th>
+                <th className="px-6 py-3 border-t border-slate-100">Actions</th>
               </tr>
             </thead>
 
@@ -734,13 +748,13 @@ export default function ActesPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                className="p-2 rounded-lg hover:bg-[#44adc9]/10 transition"
                               >
                                 <Ellipsis className="h-5 w-5 text-gray-600" />
                               </Button>
                             </DropdownMenuTrigger>
 
-                            <DropdownMenuContent align="end" className="w-36">
+                            <DropdownMenuContent align="end" className="w-40 rounded-xl border border-slate-100 shadow-xl">
                               <DropdownMenuItem
                                 onClick={() => handleEditActe(acte)}
                                 className="cursor-pointer"

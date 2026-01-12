@@ -17,7 +17,7 @@ export default function UserPage() {
   };
   return (
     <div className="space-x-2 p-4">
-      <h1 className="text-lg font-bold mb-4">UserPage</h1>
+      <h1 className="text-lg font-bold mb-4">Gestion des utilisateur</h1>
       <div className="flex grid-cols-2 gap-3">
         <Button
           variant="outline"

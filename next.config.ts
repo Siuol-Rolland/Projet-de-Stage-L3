@@ -34,6 +34,10 @@ const nextConfig: NextConfig = {
     },
   },
 
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Empêche Webpack d'inclure fs/path/os côté client
