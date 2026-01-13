@@ -5,10 +5,10 @@ generator client {
   engineType    = "node-api"
 }
 
-datasource db {
-  provider  = "postgresql"
+// datasource db {
+//   provider  = "postgresql"
   
-}
+// }
 
 model ADMINISTRATEUR {
   ID_Admin      Int            @id @default(autoincrement())

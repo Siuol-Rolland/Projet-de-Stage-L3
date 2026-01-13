@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image"
-import React from "react"
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -12,17 +12,180 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+type Departement = {
+  ID_Dep: number;
+  Nom_Dep: string;
+};
+
+type Professeur = {
+  Nom_Prof: string;
+  departements: Departement[];
+};
+
+
+type EvaluationItem = {
+  ID_Realisation: number;
+  Date_Realise: string;
+  Note: number | null;
+  sousActe: { Desc_SActes: string };
+};
+
+type HistogramStat = {
+  name: string;
+  realisation: number;
+  paiement: number;
+  quota: number;
+};
+
+type HistogramResponse = {
+  statistics: HistogramStat[];
+  totalStats: {
+    totalRealisations: number;
+    totalPaiements: number;
+    totalQuotasValides: number;
+  };
+  department: {
+    id: number;
+    name: string;
+  };
+};
+
+
+
 export default function TeacherPage() {
-    // Données de l’histogramme (analyse hebdomadaire)
-    const data = [
-      { name: 'Lundi', realisation: 12, paiement: 8, quota: 5 },
-      { name: 'Mardi', realisation: 18, paiement: 14, quota: 9 },
-      { name: 'Mercredi', realisation: 25, paiement: 20, quota: 15 },
-      { name: 'Jeudi', realisation: 22, paiement: 17, quota: 13 },
-      { name: 'Vendredi', realisation: 30, paiement: 26, quota: 21 },
-      { name: 'Samedi', realisation: 15, paiement: 10, quota: 7 },
-      { name: 'Dimanche', realisation: 8, paiement: 5, quota: 3 },
-    ];
+    const [prof, setProf] = useState<Professeur | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const [evaluated, setEvaluated] = useState<EvaluationItem[]>([]);
+    const [notEvaluated, setNotEvaluated] = useState<EvaluationItem[]>([]);
+    const [loadingEval, setLoadingEval] = useState(true);
+
+    const [selectedDep, setSelectedDep] = useState<Departement | null>(null);
+    const [finance, setFinance] = useState<{
+      soldeActuel: number;
+      soldeArrieres: number;
+    } | null>(null);
+    const [loadingFinance, setLoadingFinance] = useState(false);
+
+    const [histogramData, setHistogramData] = useState<HistogramStat[]>([]);
+    const [loadingHistogram, setLoadingHistogram] = useState(false);
+
+
+
+    useEffect(() => {
+      const fetchProf = async () => {
+        try {
+          const res = await fetch("/api/teacher/me");
+          if (!res.ok) return;
+
+          const data = await res.json();
+          setProf(data);
+        } catch (error) {
+          console.error("Erreur chargement prof:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchProf();
+    }, []);
+
+    useEffect(() => {
+      const fetchEvaluations = async () => {
+        try {
+          const res = await fetch("/api/teacher/evaluation/recent");
+          if (!res.ok) return;
+
+          const data = await res.json();
+          setEvaluated(data.evaluated);
+          setNotEvaluated(data.notEvaluated);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoadingEval(false);
+        }
+      };
+
+      fetchEvaluations();
+    }, []);
+
+    const formatDate = (date: string) => {
+      const d = new Date(date);
+      return {
+        day: d.getDate().toString().padStart(2, "0"),
+        month: d.toLocaleString("fr-FR", { month: "short" }),
+        time: d.toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+    };
+
+    const handleSelectDepartment = async (dep: Departement) => {
+      setSelectedDep(dep);
+
+      // Finance
+      setLoadingFinance(true);
+
+      // Histogramme
+      setLoadingHistogram(true);
+
+      try {
+        /* ================= FINANCE ================= */
+        const financeRes = await fetch(
+          `/api/teacher/department/${dep.ID_Dep}/finance`
+        );
+        if (financeRes.ok) {
+          const financeData = await financeRes.json();
+          setFinance(financeData);
+        }
+
+        /* ================= HISTOGRAMME ================= */
+        const statRes = await fetch(
+          `/api/teacher/department/${dep.ID_Dep}/stats`
+        );
+        if (statRes.ok) {
+          const statData: HistogramResponse = await statRes.json();
+          setHistogramData(statData.statistics);
+        }
+
+      } catch (e) {
+        console.error("Erreur chargement département:", e);
+      } finally {
+        setLoadingFinance(false);
+        setLoadingHistogram(false);
+      }
+    };
+
+
+    // Données de l’histogramme (analyse mensyelle fictive)
+    const STATIC_HISTOGRAM_DATA = [
+  {
+    name: "Jan 2025",
+    realisation: 12,
+    paiement: 9,
+    quota: 7,
+  },
+  {
+    name: "Fév 2025",
+    realisation: 15,
+    paiement: 11,
+    quota: 10,
+  },
+  {
+    name: "Mar 2025",
+    realisation: 9,
+    paiement: 6,
+    quota: 5,
+  },
+  {
+    name: "Avr 2025",
+    realisation: 18,
+    paiement: 14,
+    quota: 12,
+  },
+]
+
   return (
     <div className="p-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
@@ -41,7 +204,10 @@ export default function TeacherPage() {
             {/* Texte */}
             <div className="relative z-10 max-w-md text-white">
               <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                Bonjour, <span className="font-bold">TeacherPage</span>
+                Bonjour,{" "}
+                <span className="font-bold">
+                  {loading ? "..." : prof?.Nom_Prof ?? "Professeur"}
+                </span>
               </h1>
               <p className="mt-1 text-base md:text-lg text-white/90">
                 Bienvenue dans votre tableau de bord professeur !
@@ -51,7 +217,7 @@ export default function TeacherPage() {
 
           {/* Image */}
           <div className="pointer-events-none absolute
-                          right-4 top-4/38 -translate-y-1/2
+                          right-4 top-4/49 -translate-y-1/2
                           z-20">
             <div className="relative h-72 w-64">
               <div className="absolute inset-0 -z-10
@@ -72,66 +238,45 @@ export default function TeacherPage() {
               Spécialisation
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {loading ? (
+            <p className="text-sm text-slate-400">Chargement des départements...</p>
+            ) : prof?.departements.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                Aucun département associé à ce professeur
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {prof?.departements.map((dep) => (
+                  <div
+                    key={dep.ID_Dep}
+                    onClick={() => handleSelectDepartment(dep)}
+                    className={`relative bg-white rounded-2xl border shadow-sm p-4 max-w-sm cursor-pointer
+                      transition hover:scale-[1.02]
+                      ${selectedDep?.ID_Dep === dep.ID_Dep
+                        ? "border-[#44adc9] ring-2 ring-[#44adc9]/30"
+                        : "border-slate-100"
+                    }`}
+                  >
+                    <img
+                      src="/departement Cards.png"
+                      alt={dep.Nom_Dep}
+                      className="absolute left-[-42px] top-3/5 -translate-y-1/2 w-36 h-36 object-cover"
+                    />
 
-              {/* Département 1 */}
-              <div className="relative bg-white rounded-2xl border border-slate-100 shadow-sm p-4 max-w-sm">
-                <img
-                  src="/departement Cards.png"
-                  alt="Endodontie"
-                  className="absolute left-[-42px] top-3/5 -translate-y-1/2 w-36 h-36 object-cover"
-                />
-                <div className="ml-20">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-bold text-slate-800">
-                      Endodontie
-                    </h3>
+                    <div className="ml-20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-base font-bold text-slate-800">
+                          {dep.Nom_Dep}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-slate-500 leading-snug">
+                        Accédez aux actes et sous-actes de ce département.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-slate-500 leading-snug">
-                    Accédez aux actes et sous-actes de ce département.
-                  </p>
-                </div>
+                ))}
               </div>
-
-              {/* Département 2 */}
-              <div className="relative bg-white rounded-2xl border border-slate-100 shadow-sm p-4 max-w-sm">
-                <img
-                  src="/departement Cards.png"
-                  alt="Orthopédie dento-faciale"
-                  className="absolute left-[-42px] top-3/5 -translate-y-1/2 w-36 h-36 object-cover"
-                />
-                <div className="ml-20">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-bold text-slate-800">
-                      Orthopédie dento-faciale
-                    </h3>
-                  </div>
-                  <p className="text-sm text-slate-500 leading-snug">
-                    Accédez aux actes et sous-actes de ce département.
-                  </p>
-                </div>
-              </div>
-
-              {/* Département 3 */}
-              <div className="relative bg-white rounded-2xl border border-slate-100 shadow-sm p-4 max-w-sm">
-                <img
-                  src="/departement Cards.png"
-                  alt="Chirurgie dentaire "
-                  className="absolute left-[-42px] top-3/5 -translate-y-1/2 w-36 h-36 object-cover"
-                />
-                <div className="ml-20">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-bold text-slate-800">
-                      Chirurgie dentaire 
-                    </h3>
-                  </div>
-                  <p className="text-sm text-slate-500 leading-snug">
-                    Accédez aux actes et sous-actes de ce département.
-                  </p>
-                </div>
-              </div>
-
-            </div>
+            )}
           </div>
 
           {/* ================= HISTOGRAMME ================= */}
@@ -148,7 +293,7 @@ export default function TeacherPage() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
               {/* Titre */}
               <h2 className="text-base font-bold text-slate-600 tracking-tight">
-                Activités de [Département]
+                Activités de {selectedDep?.Nom_Dep ?? "département"}
               </h2>
 
               {/* Légende */}
@@ -170,42 +315,27 @@ export default function TeacherPage() {
 
             {/* Chart */}
             <div className="flex-1 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data} barGap={4}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip />
+              {loadingHistogram ? (
+                <p className="text-xs text-slate-400">Chargement des statistiques...</p>
+              ) : histogramData.length === 0 ? (
+                <p className="text-xs text-slate-400">
+                 Sélectionnez un département
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={histogramData} barGap={4}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip />
 
-                  <Bar
-                    dataKey="realisation"
-                    fill="#44adc9"
-                    barSize={8}
-                    radius={[3, 3, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="paiement"
-                    fill="#81cddf"
-                    barSize={8}
-                    radius={[3, 3, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="quota"
-                    fill="#a5e3f1"
-                    barSize={8}
-                    radius={[3, 3, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                    <Bar dataKey="realisation" fill="#44adc9" barSize={8} />
+                    <Bar dataKey="paiement" fill="#81cddf" barSize={8} />
+                    <Bar dataKey="quota" fill="#a5e3f1" barSize={8} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+
             </div>
           </div>
         </div>
@@ -231,30 +361,33 @@ export default function TeacherPage() {
                 </div>
 
                 <div className="space-y-2">
-                  {[
-                    { day: '12', month: 'Sept', time: '9:30', amount: '15/20' },
-                    { day: '10', month: 'Sept', time: '16:30', amount: '12/20' },
-                  ].map((item, i) => (
-                    <div
-                      key={i}
-                      className="bg-white p-2.5 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 border border-slate-50 transition-transform hover:scale-[1.01]"
-                    >
-                      {/* Badge Date réduit */}
-                      <div className="flex flex-col items-center justify-center bg-[#44adc9]/10 rounded-lg py-1 min-w-[45px]">
-                        <span className="text-base font-bold text-[#44adc9] leading-tight">{item.day}</span>
-                        <span className="text-[9px] font-bold text-[#44adc9]/70 uppercase">{item.month}</span>
-                      </div>
+                  {loadingEval ? (
+                      <p className="text-xs text-slate-400">Chargement...</p>
+                    ) : evaluated.length === 0 ? (
+                      <p className="text-xs text-slate-400">Aucune évaluation</p>
+                    ) : (
+                      evaluated.map((item) => {
+                        const d = formatDate(item.Date_Realise);
+                        return (
+                          <div key={item.ID_Realisation} className="bg-white p-2.5 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 border border-slate-50 transition-transform hover:scale-[1.01]">
+                            <div className="flex flex-col items-center justify-center bg-[#44adc9]/10 rounded-lg py-1 min-w-[45px]">
+                              <span className="text-base font-bold text-[#44adc9] leading-tight">{d.day}</span>
+                              <span className="text-[9px] font-bold text-[#44adc9]/70 uppercase">{d.month}</span>
+                            </div>
 
-                      <div className="flex-1">
-                        <p className="font-bold text-slate-700 text-[13px] leading-tight">Étudiant</p>
-                        <p className="text-slate-400 text-[10px] font-medium">{item.time} - Transaction réussie </p>
-                      </div>
-
-                      <div className="text-right pr-1">
-                        <span className="font-bold text-emerald-500 text-[13px]">{item.amount}</span>
-                      </div>
-                    </div>
-                  ))}
+                            <div className="flex-1">
+                              <p className="font-bold text-slate-700 text-[13px] leading-tight">{item.sousActe.Desc_SActes}</p>
+                              <p className="text-slate-400 text-[10px] font-medium">{d.time}</p>
+                            </div>
+                            <div className="text-right pr-1"> 
+                              <span className="font-bold text-emerald-500 text-[13px]">
+                                {item.Note}/20
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                 </div>
               </div>
 
@@ -267,29 +400,38 @@ export default function TeacherPage() {
                 </div>
 
                 <div className="space-y-2">
-                  {[
-                    { day: '08', month: 'Sept', time: '14:30', amount: '--' },
-                    { day: '05', month: 'Sept', time: '10:15', amount: '--' },
-                  ].map((item, i) => (
+                  {loadingEval ? (
+                    <p className="text-xs text-slate-400">Chargement...</p>
+                  ) : notEvaluated.length === 0 ? (
                     <div
-                      key={i}
-                      className="bg-white/60 p-2.5 rounded-xl flex items-center gap-3 border border-slate-50 opacity-80"
+                      className="bg-white/60 p-6 rounded-xl flex items-center gap-3 border border-slate-50 opacity-80 min-h-[140px]"
                     >
-                      <div className="flex flex-col items-center justify-center bg-slate-100 rounded-lg py-1 min-w-[45px]">
-                        <span className="text-base font-bold text-slate-400 leading-tight">{item.day}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{item.month}</span>
-                      </div>
-
-                      <div className="flex-1">
-                        <p className="font-bold text-slate-700 text-[13px] leading-tight">Étudiant</p>
-                        <p className="text-rose-400 text-[10px] font-medium">{item.time} - Échec </p>
-                      </div>
-
-                      <div className="text-right pr-1">
-                        <span className="font-bold text-slate-400 text-[13px] line-through">{item.amount}</span>
+                      <div className="font-bold text-center text-slate-500 text-sm py-4">
+                        Aucune réalisation en attente de notation
                       </div>
                     </div>
-                  ))}
+                  ) : (
+                    notEvaluated.slice(0, 2).map((item) => {
+                      const d = formatDate(item.Date_Realise);
+                      return (
+                        <div key={item.ID_Realisation} className="bg-white/60 p-2.5 rounded-xl flex items-center gap-3 border border-slate-50 opacity-80">
+                          <div className="flex flex-col items-center justify-center bg-slate-100 rounded-lg py-1 min-w-[45px]">
+                            <span className="text-base font-bold text-slate-400 leading-tight">{d.day}</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase">{d.month}</span>
+                          </div>
+
+                          <div className="flex-1">
+                            <p className="font-bold text-slate-700 text-[13px] leading-tight">{item.sousActe.Desc_SActes}</p>
+                            <p className="text-slate-400 text-[10px] font-medium">{d.time}</p>
+                          </div>
+                          <div className="text-right pr-1"> 
+                            <span className="font-bold text-slate-400 text-[13px]">--</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+
                 </div>
               </div>
 
@@ -310,7 +452,7 @@ export default function TeacherPage() {
 
               {/* Titre avec icône */}
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold tracking-tight">Finance du [departement]</h3>
+                <h3 className="text-xl font-bold tracking-tight">Finance du {selectedDep?.Nom_Dep ?? "département"} </h3>
                 <div className="bg-white/20 p-1.5 rounded-full">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
@@ -320,16 +462,34 @@ export default function TeacherPage() {
               </div>
 
               {/* Infos financières */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-white/20 p-3 rounded-xl flex flex-col">
-                  <span className="text-xs font-medium text-white/80">Solde actuel</span>
-                  <span className="mt-1 text-lg font-bold">50000Ar</span>
+              {loadingFinance ? (
+                <p className="text-sm text-white/80">Chargement...</p>
+              ) : finance ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-white/20 p-3 rounded-xl flex flex-col">
+                    <span className="text-xs font-medium text-white/80">
+                      Solde actuel
+                    </span>
+                    <span className="mt-1 text-lg font-bold">
+                      {finance.soldeActuel.toLocaleString()} Ar
+                    </span>
+                  </div>
+
+                  <div className="bg-white/20 p-3 rounded-xl flex flex-col">
+                    <span className="text-xs font-medium text-white/80">
+                      Solde arriérés
+                    </span>
+                    <span className="mt-1 text-lg font-bold">
+                      {finance.soldeArrieres.toLocaleString()} Ar
+                    </span>
+                  </div>
                 </div>
-                <div className="bg-white/20 p-3 rounded-xl flex flex-col">
-                  <span className="text-xs font-medium text-white/80">Solde arriérés</span>
-                  <span className="mt-1 text-lg font-bold">10000Ar</span>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-white/80">
+                  Sélectionnez un département
+                </p>
+              )}
+
             </div>
           </div>
         </div>

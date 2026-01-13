@@ -38,6 +38,20 @@ type HistoriqueType = {
   nonNotees: RealisationType[]
 }
 
+type StatisticsType = {
+  statistics: Array<{
+    name: string;
+    realisation: number;
+    paiement: number;
+    quota: number;
+    rawDate: string;
+  }>;
+  totalStats: {
+    totalRealisations: number;
+    totalPaiements: number;
+    totalQuotasValides: number;
+  }
+}
 
 
 export default function StudentPage() {
@@ -47,137 +61,37 @@ export default function StudentPage() {
 
   const [dette, setDette] = useState<number | null>(null)
   
+  const [statistics, setStatistics] = useState<StatisticsType | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchStudent = async () => {
-      const res = await fetch("/api/students/me")
+    const fetchAllData = async () => {
+      setLoading(true)
+      try {
+        // Fetch all data in parallel
+        const [studentRes, historiqueRes, detteRes, statsRes] = await Promise.all([
+          fetch("/api/students/me"),
+          fetch("/api/students/realisations/recent"),
+          fetch("/api/students/dette"),
+          fetch("/api/students/statistics") // Nouvel endpoint
+        ]);
 
-      if (res.ok) {
-        const data = await res.json()
-        setStudent(data)
+        if (studentRes.ok) setStudent(await studentRes.json());
+        if (historiqueRes.ok) setHistorique(await historiqueRes.json());
+        if (detteRes.ok) {
+          const detteData = await detteRes.json();
+          setDette(detteData.dette);
+        }
+        if (statsRes.ok) setStatistics(await statsRes.json());
+      } catch (error) {
+        console.error("Erreur lors du chargement des données:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    fetchStudent()
+    fetchAllData();
   }, [])
-
-  useEffect(() => {
-    const fetchHistorique = async () => {
-      const res = await fetch("/api/students/realisations/recent")
-      if (res.ok) {
-        const data = await res.json()
-        setHistorique(data)
-      }
-    }
-
-    fetchHistorique()
-  }, [])
-
-  useEffect(() => {
-    const fetchDette = async () => {
-      const res = await fetch("/api/students/dette")
-      if (res.ok) {
-        const data = await res.json()
-        setDette(data.dette)
-      }
-    }
-
-    fetchDette()
-  }, [])
-
-
-  // const histogramData = (() => {
-  //   if (!historique) return []
-
-  //   const allRealisations = [
-  //     ...historique.notees,
-  //     ...historique.nonNotees,
-  //   ]
-
-  //   const monthlyMap: Record<
-  //     string,
-  //     {
-  //       key: string
-  //       name: string
-  //       realisation: number
-  //       paiement: number
-  //       quota: number
-  //       date: Date
-  //     }
-  //   > = {}
-
-  //   allRealisations.forEach((item) => {
-  //     const date = new Date(item.Date_Realise)
-
-  //     // Clé stable YYYY-MM
-  //     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
-
-  //     if (!monthlyMap[key]) {
-  //       monthlyMap[key] = {
-  //         key,
-  //         name: date.toLocaleString("fr-FR", {
-  //           month: "short",
-  //           year: "numeric",
-  //         }),
-  //         realisation: 0,
-  //         paiement: 0,
-  //         quota: 0,
-  //         date: new Date(date.getFullYear(), date.getMonth(), 1),
-  //       }
-  //     }
-
-  //     // 1️⃣ Réalisation
-  //     monthlyMap[key].realisation += 1
-
-  //     // 2️⃣ Paiement effectué (argent réellement payé)
-  //     if (
-  //       item.paiement?.Statut_Paie === "TOTAL" ||
-  //       item.paiement?.Statut_Paie === "PARTIEL"
-  //     ) {
-  //       monthlyMap[key].paiement += 1
-  //     }
-
-  //     // 3️⃣ Quota validé
-  //     if (item.Statut_Valide === true || (item.Note !== null && item.Note >= 10)) {
-  //       monthlyMap[key].quota += 1
-  //     }
-  //   })
-
-  //   // Tri chronologique réel
-  //   return Object.values(monthlyMap).sort(
-  //     (a, b) => a.date.getTime() - b.date.getTime()
-  //   )
-  // })()
-
-  const STATIC_HISTOGRAM_DATA = [
-  {
-    name: "Jan 2025",
-    realisation: 12,
-    paiement: 9,
-    quota: 7,
-  },
-  {
-    name: "Fév 2025",
-    realisation: 15,
-    paiement: 11,
-    quota: 10,
-  },
-  {
-    name: "Mar 2025",
-    realisation: 9,
-    paiement: 6,
-    quota: 5,
-  },
-  {
-    name: "Avr 2025",
-    realisation: 18,
-    paiement: 14,
-    quota: 12,
-  },
-]
-
-
-
 
   return (
     <div className="p-6">
@@ -306,8 +220,13 @@ export default function StudentPage() {
 
 
             <div className="h-[210px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={STATIC_HISTOGRAM_DATA} barGap={6}>
+              {loading ? (
+                  <div className="flex justify-center items-center h-full text-slate-400">
+                    Chargement...
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statistics?.statistics ?? []} barGap={6}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
@@ -333,6 +252,7 @@ export default function StudentPage() {
 
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
