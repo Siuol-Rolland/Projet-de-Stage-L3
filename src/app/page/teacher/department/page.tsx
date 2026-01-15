@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Eye } from "lucide-react";
+import Image from "next/image";
 
 // Skeleton pour les départements principaux
 function DepartmentSkeletonTable() {
@@ -231,7 +232,7 @@ export default function TeachDepartmentPage() {
                 key={dep.ID_Dep}
                 className="relative bg-white rounded-2xl border border-slate-100 shadow-sm p-4 transition hover:shadow-md hover:-translate-y-1 max-w-sm mx-auto"
               >
-                <img
+                <Image
                   src="/departement Cards.png"
                   alt={dep.Nom_Dep}
                   className="absolute left-[-42px] top-3/5 -translate-y-1/2 w-36 h-36 object-cover"

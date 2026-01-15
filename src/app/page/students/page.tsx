@@ -53,6 +53,89 @@ type StatisticsType = {
   }
 }
 
+function StudentBannerSkeleton() {
+  return (
+    <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl p-6 min-h-[150px] shadow-xl flex items-center">
+      <div className="space-y-3">
+        <div className="h-7 w-64 bg-white/40 animate-pulse rounded" />
+        <div className="h-5 w-80 bg-white/30 animate-pulse rounded" />
+      </div>
+    </div>
+  )
+}
+
+function DepartmentSkeleton() {
+  return (
+    <div className="mt-6 bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex gap-5">
+      <div className="w-20 h-20 rounded-xl bg-slate-200 animate-pulse" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 w-32 bg-slate-200 animate-pulse rounded" />
+        <div className="h-6 w-48 bg-slate-300 animate-pulse rounded" />
+        <div className="h-4 w-56 bg-slate-100 animate-pulse rounded" />
+      </div>
+    </div>
+  )
+}
+
+function HistogramSkeleton() {
+  return (
+    <div className="relative h-[210px] w-full">
+      {/* Grille */}
+      <div className="absolute inset-0 flex flex-col justify-between px-6 py-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-px bg-slate-100" />
+        ))}
+      </div>
+
+      {/* Barres */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-8 pb-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-end gap-[6px]">
+            <div className="w-[10px] h-[60px] bg-slate-200 animate-pulse rounded-t" />
+            <div className="w-[10px] h-[90px] bg-slate-200/80 animate-pulse rounded-t" />
+            <div className="w-[10px] h-[45px] bg-slate-200/60 animate-pulse rounded-t" />
+          </div>
+        ))}
+      </div>
+
+      {/* Labels X */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-8">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="w-8 h-2 bg-slate-200 animate-pulse rounded mt-2" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function HistoriqueSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="bg-white p-3 rounded-xl flex gap-3 border border-slate-50">
+          <div className="w-10 h-10 bg-slate-200 animate-pulse rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-40 bg-slate-200 animate-pulse rounded" />
+            <div className="h-3 w-28 bg-slate-100 animate-pulse rounded" />
+          </div>
+          <div className="h-4 w-12 bg-slate-200 animate-pulse rounded" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function FinanceSkeleton() {
+  return (
+    <div className="relative overflow-hidden bg-[#81cddf] rounded-3xl p-6 mt-6 shadow-xl">
+      <div className="space-y-4">
+        <div className="h-6 w-24 bg-white/40 animate-pulse rounded" />
+        <div className="h-16 bg-white/30 animate-pulse rounded-xl" />
+      </div>
+    </div>
+  )
+}
+
 
 export default function StudentPage() {
   const [student, setStudent] = useState<StudentType | null>(null)
@@ -98,32 +181,35 @@ export default function StudentPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Card principale */}
         <div className="relative lg:col-span-2 mt-4 lg:mt-8">
-          <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl
+          {loading ? <StudentBannerSkeleton /> : (
+            <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl
                           p-6 min-h-[150px] shadow-xl
                           flex items-center">
             
-            {/* 🎨 Pattern */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.035]
-                            bg-[url('/patterns/dental-outline.svg')]
-                            bg-repeat bg-[size:140px]" />
+              {/* 🎨 Pattern */}
+              <div className="pointer-events-none absolute inset-0 opacity-[0.035]
+                              bg-[url('/patterns/dental-outline.svg')]
+                              bg-repeat bg-[size:140px]" />
 
-            {/* Glow */}
-            <div className="pointer-events-none absolute -right-24 -top-24
-                            w-80 h-80 bg-white/25 blur-3xl rounded-full" />
+              {/* Glow */}
+              <div className="pointer-events-none absolute -right-24 -top-24
+                              w-80 h-80 bg-white/25 blur-3xl rounded-full" />
 
-            {/* Texte */}
-            <div className="relative z-10 max-w-md text-white">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                Bonjour,{" "}
-                <span className="font-bold">
-                  {student ? student.FullName_Et : "Étudiant"}
-                </span>
-              </h1>
-              <p className="mt-1 text-base md:text-lg text-white/90">
-                Bienvenue dans votre tableau de bord étudiant !
-              </p>
+              {/* Texte */}
+              <div className="relative z-10 max-w-md text-white">
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
+                  Bonjour,{" "}
+                  <span className="font-bold">
+                    {student ? student.FullName_Et : "Étudiant"}
+                  </span>
+                </h1>
+                <p className="mt-1 text-base md:text-lg text-white/90">
+                  Bienvenue dans votre tableau de bord étudiant !
+                </p>
+              </div>
             </div>
-          </div>
+          )}
+          
 
           {/* Image */}
           <div className="pointer-events-none absolute
@@ -143,53 +229,56 @@ export default function StudentPage() {
           </div>
 
           {/* ================= DEPARTEMENT ================= */}
-          <div
-            className="
-              mt-6
-              bg-white
-              rounded-2xl
-              border border-slate-100
-              shadow-sm
-              p-5
-              flex items-center gap-5
-              hover:shadow-md
-              transition
-            "
-          >
-            {/* Icône / Image */}
+          {loading ? <DepartmentSkeleton /> : (
             <div
               className="
-                relative
-                w-20 h-20
-                rounded-xl
-                bg-[#44adc9]/10
-                flex items-center justify-center
-                shrink-0
+                mt-6
+                bg-white
+                rounded-2xl
+                border border-slate-100
+                shadow-sm
+                p-5
+                flex items-center gap-5
+                hover:shadow-md
+                transition
               "
             >
-              <Image
-                src="/departement Cards.png"
-                alt="Département"
-                fill
-                className="object-contain p-3"
-              />
+              {/* Icône / Image */}
+              <div
+                className="
+                  relative
+                  w-20 h-20
+                  rounded-xl
+                  bg-[#44adc9]/10
+                  flex items-center justify-center
+                  shrink-0
+                "
+              >
+                <Image
+                  src="/departement Cards.png"
+                  alt="Département"
+                  fill
+                  className="object-contain p-3"
+                />
+              </div>
+
+              {/* Texte */}
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Département
+                </span>
+
+                <h2 className="text-xl font-bold text-slate-800 tracking-tight">
+                  {student?.departement?.Nom_Dep ?? "Département inconnu"}
+                </h2>
+
+                <p className="text-sm text-slate-500 font-medium">
+                  Département académique principal
+                </p>
+              </div>
             </div>
-
-            {/* Texte */}
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Département
-              </span>
-
-              <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-                {student?.departement?.Nom_Dep ?? "Département inconnu"}
-              </h2>
-
-              <p className="text-sm text-slate-500 font-medium">
-                Département académique principal
-              </p>
-            </div>
-          </div>
+          )}
+          
           
           {/* ================= HISTOGRAMME ================= */}
           <div className="bg-white p-6 rounded-2xl shadow-sm
@@ -221,9 +310,7 @@ export default function StudentPage() {
 
             <div className="h-[210px] w-full">
               {loading ? (
-                  <div className="flex justify-center items-center h-full text-slate-400">
-                    Chargement...
-                  </div>
+                  <HistogramSkeleton />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={statistics?.statistics ?? []} barGap={6}>
@@ -268,140 +355,144 @@ export default function StudentPage() {
             </h2>
 
             <div className="space-y-5 flex-1">
-              
-              {/* --- SECTION 1 : REALISATION NOTEE --- */}
-              <div>
-                <div className="flex justify-between items-center mb-2 px-1">
-                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Réalisation noté
-                  </h3>
-                </div>
-
-                <div className="space-y-2">
-                  {historique?.notees.map((item) => {
-                    const date = new Date(item.Date_Realise)
-
-                    return (
-                      <div key={item.ID_Realisation} className="bg-white p-2.5 rounded-xl flex items-center gap-3">
-                        <div className="flex flex-col items-center bg-[#44adc9]/10 rounded-lg py-1 min-w-[45px]">
-                          <span className="text-base font-bold text-[#44adc9]">
-                            {date.getDate()}
-                          </span>
-                          <span className="text-[9px] font-bold uppercase text-[#44adc9]/70">
-                            {date.toLocaleString("fr-FR", { month: "short" })}
-                          </span>
-                        </div>
-
-                        <div className="flex-1">
-                          <p className="font-bold text-slate-700 text-[13px]">
-                            {item.sousActe.Desc_SActes}
-                          </p>
-                          <p className="text-slate-400 text-[10px]">
-                            {date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        </div>
-
-                        <span className="font-bold text-emerald-500 text-[13px]">
-                          {item.Note}/20
-                        </span>
-                      </div>
-                    )
-                  })}
-
-                </div>
-              </div>
-
-              {/* --- SECTION 2 : REALISATION NON NOTEE --- */}
-              <div>
-                <div className="flex justify-between items-center mb-2 px-1">
-                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Réalisation non noté
-                  </h3>
-                </div>
-
-                <div className="space-y-2">
-                  {(historique?.nonNotees ?? []).length === 0 ? (
-                    <div
-                      className="bg-white/60 p-6 rounded-xl flex items-center gap-3 border border-slate-50 opacity-80 min-h-[140px]"
-                    >
-                      <div className="font-bold text-center text-slate-500 text-sm py-4">
-                        Aucune réalisation en attente de notation
-                      </div>
+              {loading ? <HistoriqueSkeleton /> : (
+                <> 
+                  {/* --- SECTION 1 : REALISATION NOTEE --- */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2 px-1">
+                      <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Réalisation noté
+                      </h3>
                     </div>
-                  ) : (
-                    (historique?.nonNotees ?? []).map((item) => {
-                      const date = new Date(item.Date_Realise)
 
-                      return (
+                    <div className="space-y-2">
+                      {historique?.notees.map((item) => {
+                        const date = new Date(item.Date_Realise)
+
+                        return (
+                          <div key={item.ID_Realisation} className="bg-white p-2.5 rounded-xl flex items-center gap-3">
+                            <div className="flex flex-col items-center bg-[#44adc9]/10 rounded-lg py-1 min-w-[45px]">
+                              <span className="text-base font-bold text-[#44adc9]">
+                                {date.getDate()}
+                              </span>
+                              <span className="text-[9px] font-bold uppercase text-[#44adc9]/70">
+                                {date.toLocaleString("fr-FR", { month: "short" })}
+                              </span>
+                            </div>
+
+                            <div className="flex-1">
+                              <p className="font-bold text-slate-700 text-[13px]">
+                                {item.sousActe.Desc_SActes}
+                              </p>
+                              <p className="text-slate-400 text-[10px]">
+                                {date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+
+                            <span className="font-bold text-emerald-500 text-[13px]">
+                              {item.Note}/20
+                            </span>
+                          </div>
+                        )
+                      })}
+
+                    </div>
+                  </div>
+
+                  {/* --- SECTION 2 : REALISATION NON NOTEE --- */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2 px-1">
+                      <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Réalisation non noté
+                      </h3>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(historique?.nonNotees ?? []).length === 0 ? (
                         <div
-                          key={item.ID_Realisation}
-                          className="bg-white/60 p-2.5 rounded-xl flex items-center gap-3 opacity-80"
+                          className="bg-white/60 p-6 rounded-xl flex items-center gap-3 border border-slate-50 opacity-80 min-h-[140px]"
                         >
-                          <div className="flex flex-col items-center bg-slate-100 rounded-lg py-1 min-w-[45px]">
-                            <span className="text-base font-bold text-slate-400">
-                              {date.getDate()}
-                            </span>
-                            <span className="text-[9px] font-bold uppercase text-slate-400">
-                              {date.toLocaleString("fr-FR", { month: "short" })}
-                            </span>
+                          <div className="font-bold text-center text-slate-500 text-sm py-4">
+                            Aucune réalisation en attente de notation
                           </div>
-
-                          <div className="flex-1">
-                            <p className="font-bold text-slate-700 text-[13px]">
-                              {item.sousActe.Desc_SActes}
-                            </p>
-                            <p className="text-slate-400 text-[10px]">
-                              {date.toLocaleTimeString("fr-FR", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
-                          </div>
-
-                          <span className="font-bold text-slate-400 text-[13px]">--</span>
                         </div>
-                      )
-                    })
-                  )}
+                      ) : (
+                        (historique?.nonNotees ?? []).map((item) => {
+                          const date = new Date(item.Date_Realise)
 
-                </div>
-              </div>
+                          return (
+                            <div
+                              key={item.ID_Realisation}
+                              className="bg-white/60 p-2.5 rounded-xl flex items-center gap-3 opacity-80"
+                            >
+                              <div className="flex flex-col items-center bg-slate-100 rounded-lg py-1 min-w-[45px]">
+                                <span className="text-base font-bold text-slate-400">
+                                  {date.getDate()}
+                                </span>
+                                <span className="text-[9px] font-bold uppercase text-slate-400">
+                                  {date.toLocaleString("fr-FR", { month: "short" })}
+                                </span>
+                              </div>
 
+                              <div className="flex-1">
+                                <p className="font-bold text-slate-700 text-[13px]">
+                                  {item.sousActe.Desc_SActes}
+                                </p>
+                                <p className="text-slate-400 text-[10px]">
+                                  {date.toLocaleTimeString("fr-FR", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </p>
+                              </div>
+
+                              <span className="font-bold text-slate-400 text-[13px]">--</span>
+                            </div>
+                          )
+                        })
+                      )}
+
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
           {/* ================= FINANCE CARD ================= */}
-          <div className="relative overflow-hidden bg-[#81cddf] rounded-3xl p-6 mt-6 shadow-xl">
+          {loading ? <FinanceSkeleton /> : (
+            <div className="relative overflow-hidden bg-[#81cddf] rounded-3xl p-6 mt-6 shadow-xl">
 
-            {/* Background pattern et effet flou */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.04]
-                            bg-[url('/patterns/dental-outline.svg')] bg-repeat bg-[size:120px]" />
-            <div className="pointer-events-none absolute -right-20 -top-20
-                            w-60 h-60 bg-white/30 blur-3xl rounded-full" />
+              {/* Background pattern et effet flou */}
+              <div className="pointer-events-none absolute inset-0 opacity-[0.04]
+                              bg-[url('/patterns/dental-outline.svg')] bg-repeat bg-[size:120px]" />
+              <div className="pointer-events-none absolute -right-20 -top-20
+                              w-60 h-60 bg-white/30 blur-3xl rounded-full" />
 
-            {/* Contenu principal */}
-            <div className="relative z-10 text-white flex flex-col space-y-4">
+              {/* Contenu principal */}
+              <div className="relative z-10 text-white flex flex-col space-y-4">
 
-              {/* Titre avec icône */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold tracking-tight">Finance</h3>
-                <div className="bg-white/20 p-1.5 rounded-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                  </svg>
+                {/* Titre avec icône */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold tracking-tight">Finance</h3>
+                  <div className="bg-white/20 p-1.5 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
 
-              {/* Infos financières */}
-              <div className="grid grid-cols-1  gap-3">
-                <div className="bg-white/20 p-3 rounded-xl flex flex-col">
-                  <span className="text-xs font-medium text-white/80">Solde arriérés</span>
-                  <span className="mt-1 text-lg font-bold">{dette !== null ? `${dette.toLocaleString("fr-FR")} Ar` : "—"}</span>
+                {/* Infos financières */}
+                <div className="grid grid-cols-1  gap-3">
+                  <div className="bg-white/20 p-3 rounded-xl flex flex-col">
+                    <span className="text-xs font-medium text-white/80">Solde arriérés</span>
+                    <span className="mt-1 text-lg font-bold">{dette !== null ? `${dette.toLocaleString("fr-FR")} Ar` : "—"}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

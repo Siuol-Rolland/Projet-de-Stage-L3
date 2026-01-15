@@ -15,6 +15,36 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
+function DepartmentTableSkeleton({ rows = 5 }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-pulse">
+      <table className="min-w-full text-sm">
+        <thead className="bg-[#f8fafc] border-b border-slate-100">
+          <tr>
+            <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
+              Nom du département
+            </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, i) => (
+            <tr key={i} className="border-b border-slate-100">
+              <td className="px-6 py-3">
+                <div className="h-4 w-32 bg-slate-200 rounded"></div>
+              </td>
+              <td className="px-3 py-3 text-right">
+                <div className="h-4 w-10 bg-slate-200 rounded mx-auto"></div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+
 export default function DepartmentPage() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -42,14 +72,18 @@ export default function DepartmentPage() {
   }, []);
 
   const fetchDepartments = async () => {
+    setLoading(true); // ✅ commencer le Skeleton
     try {
       const res = await fetch("/api/admin/department");
       const data = await res.json();
       setDepartements(data);
     } catch (error) {
       console.error("Erreur de chargement :", error);
+    } finally {
+      setLoading(false); // ✅ fin du Skeleton
     }
   };
+
 
   // Ferme le menu Ellipsis si on clique ailleurs
   useEffect(() => {
@@ -234,7 +268,10 @@ export default function DepartmentPage() {
 
       {/* Tableau */}
       <div className="mt-4">
-        {departements.length === 0 ? (
+        {loading ? (
+          <DepartmentTableSkeleton rows={5} />
+        ) :
+        departements.length === 0 ? (
           <p className="text-gray-500 italic">Aucun département ajouté pour le moment.</p>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">

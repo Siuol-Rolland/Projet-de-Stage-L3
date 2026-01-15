@@ -51,6 +51,128 @@ type HistogramItem = {
   quotaCount: number;
 };
 
+function AdminBannerSkeleton() {
+  return (
+    <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl p-8 min-h-[180px] shadow-xl">
+      <div className="space-y-3">
+        <div className="h-8 w-72 bg-white/40 animate-pulse rounded" />
+        <div className="h-5 w-96 bg-white/30 animate-pulse rounded" />
+      </div>
+    </div>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-slate-200 animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-6 w-20 bg-slate-200 animate-pulse rounded" />
+            <div className="h-4 w-24 bg-slate-100 animate-pulse rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HistogramSkeleton() {
+  return (
+    <div className="relative h-[232px] w-full">
+
+      {/* Grilles horizontales (comme CartesianGrid vertical={false}) */}
+      <div className="absolute inset-0 flex flex-col justify-between px-6 py-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="w-full h-px bg-slate-100"
+          />
+        ))}
+      </div>
+
+      {/* Barres */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-8 pb-4">
+
+        {Array.from({ length: 6 }).map((_, groupIndex) => (
+          <div
+            key={groupIndex}
+            className="flex items-end gap-[6px]"
+          >
+            {/* Réalisation */}
+            <div
+              className="w-[10px] bg-slate-200 animate-pulse rounded-t"
+              style={{ height: `${40 + groupIndex * 10}px` }}
+            />
+
+            {/* Paiement */}
+            <div
+              className="w-[10px] bg-slate-200/80 animate-pulse rounded-t"
+              style={{ height: `${60 + groupIndex * 12}px` }}
+            />
+
+            {/* Quota */}
+            <div
+              className="w-[10px] bg-slate-200/60 animate-pulse rounded-t"
+              style={{ height: `${30 + groupIndex * 8}px` }}
+            />
+          </div>
+        ))}
+
+      </div>
+
+      {/* Axe X (labels fantômes) */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-8">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="w-8 h-2 bg-slate-200/70 animate-pulse rounded mt-2"
+          />
+        ))}
+      </div>
+
+    </div>
+  );
+}
+
+
+function HistoriqueSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white p-3 rounded-xl flex gap-3 border border-slate-50"
+        >
+          <div className="w-10 h-10 bg-slate-200 animate-pulse rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-32 bg-slate-200 animate-pulse rounded" />
+            <div className="h-3 w-48 bg-slate-100 animate-pulse rounded" />
+          </div>
+          <div className="h-4 w-16 bg-slate-200 animate-pulse rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FinanceSkeleton() {
+  return (
+    <div className="relative overflow-hidden bg-[#81cddf] rounded-3xl p-6 mt-6 shadow-xl">
+      <div className="space-y-4">
+        <div className="h-6 w-24 bg-white/40 animate-pulse rounded" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-16 bg-white/30 animate-pulse rounded-xl" />
+          <div className="h-16 bg-white/30 animate-pulse rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 
 export default function AdminPage() {
@@ -209,8 +331,8 @@ export default function AdminPage() {
 
         {/* ================= BANNER (2/3) ================= */}
         <div className="relative lg:col-span-2">
-
-          <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl p-8 min-h-[180px] shadow-xl">
+          {loading ? <AdminBannerSkeleton /> : (
+              <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl p-8 min-h-[180px] shadow-xl">
 
             {/* 🎨 Pattern */}
             <div className="pointer-events-none absolute inset-0 opacity-[0.035]
@@ -237,6 +359,8 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+          )}
+          
 
           {/* ================= AVATAR ================= */}
           <div className="pointer-events-none absolute right-6 top-2/19 z-20 -translate-y-1/2">
@@ -253,7 +377,8 @@ export default function AdminPage() {
           </div>
 
           {/* ================= STATS CARDS ================= */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+          {statsData ? (
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
             {stats.map((stat, index) => (
               <div
                 key={index}
@@ -275,7 +400,10 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
-
+          ) : (
+            <StatsSkeleton />
+          )}
+          
           {/* ================= HISTOGRAMME ================= */}
           <div
             className="bg-white p-6 rounded-2xl shadow-sm
@@ -309,12 +437,13 @@ export default function AdminPage() {
             <div className="h-[232px] w-full">
               {histogramLoading ? (
                 /* 🔄 LOADING */
-                <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                  <div className="w-8 h-8 border-4 border-[#44adc9]/30 border-t-[#44adc9] rounded-full animate-spin mb-3" />
-                  <span className="text-sm font-medium">
-                    Chargement des statistiques...
-                  </span>
-                </div>
+                // <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                //   <div className="w-8 h-8 border-4 border-[#44adc9]/30 border-t-[#44adc9] rounded-full animate-spin mb-3" />
+                //   <span className="text-sm font-medium">
+                //     Chargement des statistiques...
+                //   </span>
+                // </div>
+                <HistogramSkeleton />
               ) : histogramData.length === 0 ? (
                 /* 📭 AUCUNE DONNÉE */
                 <div className="h-full flex items-center justify-center text-slate-400 text-sm">
@@ -351,9 +480,7 @@ export default function AdminPage() {
                 </ResponsiveContainer>
               )}
             </div>
-
           </div>
-
         </div>
 
         {/* ================= HISTORIQUE + FINANCE ================= */}
@@ -367,140 +494,149 @@ export default function AdminPage() {
             </h2>
 
             <div className="space-y-5 flex-1">
-              
-              {/* --- SECTION 1 : PAIEMENT VALIDÉ --- */}
-              <div>
-                <div className="flex justify-between items-center mb-2 px-1">
-                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Paiement validé
-                  </h3>
-                </div>
+              {/* 🔄 LOADING HISTORIQUE */}
+              {valides.length === 0 && annules.length === 0 ? (
+                <HistoriqueSkeleton />
+              ) : (
+                <>  
+                  {/* --- SECTION 1 : PAIEMENT VALIDÉ --- */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2 px-1">
+                      <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Paiement validé
+                      </h3>
+                    </div>
 
-                <div className="space-y-2">
-                  {valides.map((item) => {
-                    const d = formatDate(item.Date_Action);
-                    return (
-                      <div
-                        key={item.ID_Hist}
-                        className="bg-white p-2.5 rounded-xl flex items-center gap-3 border border-slate-50"
-                      >
-                        <div className="flex flex-col items-center justify-center bg-[#44adc9]/10 rounded-lg py-1 min-w-[45px]">
-                          <span className="text-base font-bold text-[#44adc9]">{d.day}</span>
-                          <span className="text-[9px] font-bold text-[#44adc9]/70 uppercase">{d.month}</span>
-                        </div>
+                    <div className="space-y-2">
+                      {valides.map((item) => {
+                        const d = formatDate(item.Date_Action);
+                        return (
+                          <div
+                            key={item.ID_Hist}
+                            className="bg-white p-2.5 rounded-xl flex items-center gap-3 border border-slate-50"
+                          >
+                            <div className="flex flex-col items-center justify-center bg-[#44adc9]/10 rounded-lg py-1 min-w-[45px]">
+                              <span className="text-base font-bold text-[#44adc9]">{d.day}</span>
+                              <span className="text-[9px] font-bold text-[#44adc9]/70 uppercase">{d.month}</span>
+                            </div>
 
-                        <div className="flex-1">
-                          <p className="font-bold text-slate-700 text-[13px]">
-                            {item.paiement.etudiant.FullName_Et}
-                          </p>
-                          <p className="text-[10.5px] text-slate-400 font-medium">
-                            {getSousActes(item)}
-                          </p>
-                          <p className="text-[10px] text-slate-400">
-                            {d.time} - Transaction validée
-                          </p>
-                        </div>
+                            <div className="flex-1">
+                              <p className="font-bold text-slate-700 text-[13px]">
+                                {item.paiement.etudiant.FullName_Et}
+                              </p>
+                              <p className="text-[10.5px] text-slate-400 font-medium">
+                                {getSousActes(item)}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                {d.time} - Transaction validée
+                              </p>
+                            </div>
 
-                        <div className="text-right">
-                          <span className="font-bold text-emerald-500 text-[13px]">
-                            + {formatAmount(item.Montant)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                            <div className="text-right">
+                              <span className="font-bold text-emerald-500 text-[13px]">
+                                + {formatAmount(item.Montant)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
 
-                </div>
-              </div>
+                    </div>
+                  </div>
 
-              {/* --- SECTION 2 : PAIEMENT ANNULÉ --- */}
-              <div>
-                <div className="flex justify-between items-center mb-2 px-1">
-                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Paiement annulé
-                  </h3>
-                </div>
+                  {/* --- SECTION 2 : PAIEMENT ANNULÉ --- */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2 px-1">
+                      <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Paiement annulé
+                      </h3>
+                    </div>
 
-                <div className="space-y-2">
-                  {annules.map((item) => {
-                    const d = formatDate(item.Date_Action);
-                    return (
-                      <div
-                        key={item.ID_Hist}
-                        className="bg-white/60 p-2.5 rounded-xl flex items-center gap-3 border border-slate-50 opacity-80"
-                      >
-                        <div className="flex flex-col items-center justify-center bg-slate-100 rounded-lg py-1 min-w-[45px]">
-                          <span className="text-base font-bold text-slate-400">{d.day}</span>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">{d.month}</span>
-                        </div>
+                    <div className="space-y-2">
+                      {annules.map((item) => {
+                        const d = formatDate(item.Date_Action);
+                        return (
+                          <div
+                            key={item.ID_Hist}
+                            className="bg-white/60 p-2.5 rounded-xl flex items-center gap-3 border border-slate-50 opacity-80"
+                          >
+                            <div className="flex flex-col items-center justify-center bg-slate-100 rounded-lg py-1 min-w-[45px]">
+                              <span className="text-base font-bold text-slate-400">{d.day}</span>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase">{d.month}</span>
+                            </div>
 
-                        <div className="flex-1">
-                          <p className="font-bold text-slate-700 text-[13px]">
-                            {item.paiement.etudiant.FullName_Et}
-                          </p>
-                          <p className="text-[10.5px] text-slate-400 font-medium">
-                            {getSousActes(item)}
-                          </p>
-                          <p className="text-[10px] text-rose-400">
-                            {d.time} - Annulée
-                          </p>
-                        </div>
+                            <div className="flex-1">
+                              <p className="font-bold text-slate-700 text-[13px]">
+                                {item.paiement.etudiant.FullName_Et}
+                              </p>
+                              <p className="text-[10.5px] text-slate-400 font-medium">
+                                {getSousActes(item)}
+                              </p>
+                              <p className="text-[10px] text-rose-400">
+                                {d.time} - Annulée
+                              </p>
+                            </div>
 
-                        <div className="text-right">
-                          <span className="font-bold text-slate-400 line-through text-[13px]">
-                            {formatAmount(item.Montant)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                            <div className="text-right">
+                              <span className="font-bold text-slate-400 line-through text-[13px]">
+                                {formatAmount(item.Montant)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
 
-                </div>
-              </div>
-
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
           {/* ================= FINANCE CARD ================= */}
-          <div className="relative overflow-hidden bg-[#81cddf] rounded-3xl p-6 mt-6 shadow-xl">
+          {finance === null ? (
+            <FinanceSkeleton />
+          ) : (
+            <div className="relative overflow-hidden bg-[#81cddf] rounded-3xl p-6 mt-6 shadow-xl">
 
-            {/* Background pattern et effet flou */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.04]
-                            bg-[url('/patterns/dental-outline.svg')] bg-repeat bg-[size:120px]" />
-            <div className="pointer-events-none absolute -right-20 -top-20
-                            w-60 h-60 bg-white/30 blur-3xl rounded-full" />
+              {/* Background pattern et effet flou */}
+              <div className="pointer-events-none absolute inset-0 opacity-[0.04]
+                              bg-[url('/patterns/dental-outline.svg')] bg-repeat bg-[size:120px]" />
+              <div className="pointer-events-none absolute -right-20 -top-20
+                              w-60 h-60 bg-white/30 blur-3xl rounded-full" />
 
-            {/* Contenu principal */}
-            <div className="relative z-10 text-white flex flex-col space-y-4">
+              {/* Contenu principal */}
+              <div className="relative z-10 text-white flex flex-col space-y-4">
 
-              {/* Titre avec icône */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold tracking-tight">Finance</h3>
-                <div className="bg-white/20 p-1.5 rounded-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                  </svg>
+                {/* Titre avec icône */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold tracking-tight">Finance</h3>
+                  <div className="bg-white/20 p-1.5 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
 
-              {/* Infos financières */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-white/20 p-3 rounded-xl flex flex-col">
-                  <span className="text-xs font-medium text-white/80">Solde actuel</span>
-                  <span className="mt-1 text-lg font-bold">
-                    {finance ? formatMoney(finance.soldeActuel) : "..."}
-                  </span>
-                </div>
-                <div className="bg-white/20 p-3 rounded-xl flex flex-col">
-                  <span className="text-xs font-medium text-white/80">Solde arriérés</span>
-                  <span className="mt-1 text-lg font-bold">
-                    {finance ? formatMoney(finance.soldeArrieres) : "..."}
-                  </span>
+                {/* Infos financières */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-white/20 p-3 rounded-xl flex flex-col">
+                    <span className="text-xs font-medium text-white/80">Solde actuel</span>
+                    <span className="mt-1 text-lg font-bold">
+                      {finance ? formatMoney(finance.soldeActuel) : "..."}
+                    </span>
+                  </div>
+                  <div className="bg-white/20 p-3 rounded-xl flex flex-col">
+                    <span className="text-xs font-medium text-white/80">Solde arriérés</span>
+                    <span className="mt-1 text-lg font-bold">
+                      {finance ? formatMoney(finance.soldeArrieres) : "..."}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

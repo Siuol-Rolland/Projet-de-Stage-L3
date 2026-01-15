@@ -50,6 +50,97 @@ type HistogramResponse = {
   };
 };
 
+/* ======================= SKELETONS ======================= */
+
+function BannerSkeleton() {
+  return (
+    <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl p-8 min-h-[180px] shadow-xl">
+      <div className="space-y-3">
+        <div className="h-7 w-56 bg-white/40 animate-pulse rounded" />
+        <div className="h-4 w-72 bg-white/30 animate-pulse rounded" />
+      </div>
+    </div>
+  );
+}
+
+function DepartmentSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex gap-4"
+        >
+          <div className="w-16 h-16 bg-slate-200 animate-pulse rounded-xl" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-32 bg-slate-200 animate-pulse rounded" />
+            <div className="h-3 w-44 bg-slate-100 animate-pulse rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HistogramSkeletonTeacher() {
+  return (
+    <div className="relative h-full w-full">
+      {/* lignes */}
+      <div className="absolute inset-0 flex flex-col justify-between px-4 py-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-px bg-slate-100" />
+        ))}
+      </div>
+
+      {/* barres */}
+      <div className="absolute bottom-2 left-0 right-0 flex justify-between px-6">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex items-end gap-1">
+            <div className="w-2 bg-slate-200 animate-pulse rounded-t"
+              style={{ height: `${30 + i * 6}px` }} />
+            <div className="w-2 bg-slate-200/80 animate-pulse rounded-t"
+              style={{ height: `${40 + i * 8}px` }} />
+            <div className="w-2 bg-slate-200/60 animate-pulse rounded-t"
+              style={{ height: `${25 + i * 5}px` }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EvaluationSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white p-3 rounded-xl flex gap-3 border border-slate-50"
+        >
+          <div className="w-10 h-10 bg-slate-200 animate-pulse rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-40 bg-slate-200 animate-pulse rounded" />
+            <div className="h-3 w-24 bg-slate-100 animate-pulse rounded" />
+          </div>
+          <div className="h-4 w-10 bg-slate-200 animate-pulse rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FinanceSkeletonTeacher() {
+  return (
+
+    <div className="space-y-4">
+      <div className="h-6 w-40 bg-white/40 animate-pulse rounded" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="h-16 bg-white/30 animate-pulse rounded-xl" />
+        <div className="h-16 bg-white/30 animate-pulse rounded-xl" />
+      </div>
+    </div>
+  );
+}
 
 
 export default function TeacherPage() {
@@ -191,29 +282,31 @@ export default function TeacherPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Card principale */}
         <div className="relative lg:col-span-2">
-          <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl p-8 min-h-[180px] shadow-xl">
-            {/* Pattern */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.035]
-                            bg-[url('/patterns/dental-outline.svg')]
-                            bg-repeat bg-[size:140px]"/>
-            
-            {/* Glow */}
-            <div className="pointer-events-none absolute -right-32 -top-32
-                            w-96 h-96 bg-white/25 blur-3xl rounded-full"/>
-            
-            {/* Texte */}
-            <div className="relative z-10 max-w-md text-white">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                Bonjour,{" "}
-                <span className="font-bold">
-                  {loading ? "..." : prof?.Nom_Prof ?? "Professeur"}
-                </span>
-              </h1>
-              <p className="mt-1 text-base md:text-lg text-white/90">
-                Bienvenue dans votre tableau de bord professeur !
-              </p>
+          {loading ? <BannerSkeleton /> : (
+            <div className="relative overflow-hidden bg-[#44adc9] rounded-2xl p-8 min-h-[180px] shadow-xl">
+              {/* Pattern */}
+              <div className="pointer-events-none absolute inset-0 opacity-[0.035]
+                              bg-[url('/patterns/dental-outline.svg')]
+                              bg-repeat bg-[size:140px]"/>
+              
+              {/* Glow */}
+              <div className="pointer-events-none absolute -right-32 -top-32
+                              w-96 h-96 bg-white/25 blur-3xl rounded-full"/>
+              
+              {/* Texte */}
+              <div className="relative z-10 max-w-md text-white">
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
+                  Bonjour,{" "}
+                  <span className="font-bold">
+                    {loading ? "..." : prof?.Nom_Prof ?? "Professeur"}
+                  </span>
+                </h1>
+                <p className="mt-1 text-base md:text-lg text-white/90">
+                  Bienvenue dans votre tableau de bord professeur !
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Image */}
           <div className="pointer-events-none absolute
@@ -239,7 +332,7 @@ export default function TeacherPage() {
             </h2>
 
             {loading ? (
-            <p className="text-sm text-slate-400">Chargement des départements...</p>
+              <DepartmentSkeleton />
             ) : prof?.departements.length === 0 ? (
               <p className="text-sm text-slate-400">
                 Aucun département associé à ce professeur
@@ -316,7 +409,7 @@ export default function TeacherPage() {
             {/* Chart */}
             <div className="flex-1 w-full">
               {loadingHistogram ? (
-                <p className="text-xs text-slate-400">Chargement des statistiques...</p>
+                <HistogramSkeletonTeacher />
               ) : histogramData.length === 0 ? (
                 <p className="text-xs text-slate-400">
                  Sélectionnez un département
@@ -362,7 +455,7 @@ export default function TeacherPage() {
 
                 <div className="space-y-2">
                   {loadingEval ? (
-                      <p className="text-xs text-slate-400">Chargement...</p>
+                      <EvaluationSkeleton />
                     ) : evaluated.length === 0 ? (
                       <p className="text-xs text-slate-400">Aucune évaluation</p>
                     ) : (
@@ -463,7 +556,7 @@ export default function TeacherPage() {
 
               {/* Infos financières */}
               {loadingFinance ? (
-                <p className="text-sm text-white/80">Chargement...</p>
+                <FinanceSkeletonTeacher />
               ) : finance ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-white/20 p-3 rounded-xl flex flex-col">

@@ -31,6 +31,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+function ActesTableSkeleton({ rows = 5 }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <table className="w-full text-sm animate-pulse">
+        <thead className="bg-[#f8fafc] border-b border-slate-100">
+          <tr>
+            <th className="px-6 py-3 border-t border-slate-100">Département</th>
+            <th className="px-6 py-3 border-t border-slate-100">Acte</th>
+            <th className="px-6 py-3 border-t border-slate-100">Sous-Actes</th>
+            <th className="px-6 py-3 border-t border-slate-100">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, i) => (
+            <tr key={i}>
+              <td className="px-4 py-3 border-t">
+                <div className="h-4 w-24 bg-slate-200 rounded"></div>
+              </td>
+              <td className="px-4 py-3 border-t">
+                <div className="h-4 w-32 bg-slate-200 rounded"></div>
+              </td>
+              <td className="px-4 py-3 border-t">
+                <div className="h-4 w-40 bg-slate-200 rounded"></div>
+              </td>
+              <td className="px-4 py-3 border-t text-center">
+                <div className="h-4 w-6 bg-slate-200 rounded mx-auto"></div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+
 export default function ActesPage() {
   const [open, setOpen] = useState(false);
   const [departements, setDepartements] = useState<any[]>([]);
@@ -78,18 +114,22 @@ export default function ActesPage() {
 
 
   useEffect(() => {
-  const fetchActes = async () => {
-    try {
-      const res = await fetch("/api/admin/actes");
-      const data = await res.json();
-      setActes(data);
-    } catch (error) {
-      console.error("Erreur chargement actes", error);
-    }
-  };
+    const fetchActes = async () => {
+      setLoading(true); // <--- on active le loading avant le fetch
+      try {
+        const res = await fetch("/api/admin/actes");
+        const data = await res.json();
+        setActes(data);
+      } catch (error) {
+        console.error("Erreur chargement actes", error);
+      } finally {
+        setLoading(false); // <--- on désactive le loading après
+      }
+    };
 
-  fetchActes();
-}, []);
+    fetchActes();
+  }, []);
+
 
 
   // 🔹 Charger les départements
@@ -679,109 +719,114 @@ export default function ActesPage() {
       {/* 📌 TABLEAU STATIQUE STYLISÉ */}
       <div className="mt-8">
         {/* <h2 className="text-lg font-semibold mb-3">Liste des actes</h2> */}
-
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-[#f8fafc] border-b border-slate-100">
-              <tr className="hover:bg-[#44adc9]/5 transition">
-                <th className="px-6 py-3 border-t border-slate-100">Département</th>
-                <th className="px-6 py-3 border-t border-slate-100">Acte</th>
-                <th className="px-6 py-3 border-t border-slate-100">Sous-Actes</th>
-                <th className="px-6 py-3 border-t border-slate-100">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {Object.keys(actesParDepartement).length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="text-center py-6 text-gray-500">
-                    Aucun acte disponible
-                  </td>
+        {actes.length === 0 && loading ? (
+          <ActesTableSkeleton rows={5} />
+        ) : actes.length === 0 ? (
+          <p className="text-center py-6 text-gray-500">Aucun acte disponible</p>
+        ) : ( 
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-[#f8fafc] border-b border-slate-100">
+                <tr className="hover:bg-[#44adc9]/5 transition">
+                  <th className="px-6 py-3 border-t border-slate-100">Département</th>
+                  <th className="px-6 py-3 border-t border-slate-100">Acte</th>
+                  <th className="px-6 py-3 border-t border-slate-100">Sous-Actes</th>
+                  <th className="px-6 py-3 border-t border-slate-100">Actions</th>
                 </tr>
-              ) : (
-                Object.entries(actesParDepartement).map(
-                  ([nomDep, actesDep]: any, depIndex) =>
-                    actesDep.map((acte: any, acteIndex: number) => (
-                      <tr
-                        key={`${depIndex}-${acteIndex}`}
-                        className="hover:bg-gray-50"
-                      >
-                        {/* Département (affiché une seule fois) */}
-                        {acteIndex === 0 && (
-                          <td
-                            rowSpan={actesDep.length}
-                            className="px-4 py-3 border-t font-semibold align-top bg-gray-50"
-                          >
-                            {nomDep}
-                          </td>
-                        )}
+              </thead>
 
-                        {/* Acte */}
-                        <td className="px-4 py-3 border-t font-medium">
-                          {acte.Desc_Actes}
-                        </td>
-
-                        {/* Sous-actes regroupés */}
-                        <td className="px-4 py-3 border-t">
-                          {acte.sous_actes.length === 0 ? (
-                            <span className="text-xs text-gray-400">
-                              Aucun sous-acte
-                            </span>
-                          ) : (
-                            <ul className="space-y-1">
-                              {acte.sous_actes.map((s: any) => (
-                                <li
-                                  key={s.ID_SActes}
-                                  className="text-sm text-gray-700"
-                                >
-                                  • {s.Desc_SActes} —{" "}
-                                  <span className="font-medium">{s.Prix} Ar</span>
-                                </li>
-                              ))}
-                            </ul>
+              <tbody>
+                {Object.keys(actesParDepartement).length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="text-center py-6 text-gray-500">
+                      Aucun acte disponible
+                    </td>
+                  </tr>
+                ) : (
+                  Object.entries(actesParDepartement).map(
+                    ([nomDep, actesDep]: any, depIndex) =>
+                      actesDep.map((acte: any, acteIndex: number) => (
+                        <tr
+                          key={`${depIndex}-${acteIndex}`}
+                          className="hover:bg-gray-50"
+                        >
+                          {/* Département (affiché une seule fois) */}
+                          {acteIndex === 0 && (
+                            <td
+                              rowSpan={actesDep.length}
+                              className="px-4 py-3 border-t font-semibold align-top bg-gray-50"
+                            >
+                              {nomDep}
+                            </td>
                           )}
-                        </td>
-                        {/* Actions */}
-                        <td className="px-2 py-3 border-t text-center align-top">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="p-2 rounded-lg hover:bg-[#44adc9]/10 transition"
-                              >
-                                <Ellipsis className="h-5 w-5 text-gray-600" />
-                              </Button>
-                            </DropdownMenuTrigger>
 
-                            <DropdownMenuContent align="end" className="w-40 rounded-xl border border-slate-100 shadow-xl">
-                              <DropdownMenuItem
-                                onClick={() => handleEditActe(acte)}
-                                className="cursor-pointer"
-                              >
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Modifier
-                              </DropdownMenuItem>
+                          {/* Acte */}
+                          <td className="px-4 py-3 border-t font-medium">
+                            {acte.Desc_Actes}
+                          </td>
 
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteClick(acte)}
-                                className="cursor-pointer text-red-600 focus:text-red-600"
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    ))
-                )
-              )}
-            </tbody>
+                          {/* Sous-actes regroupés */}
+                          <td className="px-4 py-3 border-t">
+                            {acte.sous_actes.length === 0 ? (
+                              <span className="text-xs text-gray-400">
+                                Aucun sous-acte
+                              </span>
+                            ) : (
+                              <ul className="space-y-1">
+                                {acte.sous_actes.map((s: any) => (
+                                  <li
+                                    key={s.ID_SActes}
+                                    className="text-sm text-gray-700"
+                                  >
+                                    • {s.Desc_SActes} —{" "}
+                                    <span className="font-medium">{s.Prix} Ar</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                          {/* Actions */}
+                          <td className="px-2 py-3 border-t text-center align-top">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="p-2 rounded-lg hover:bg-[#44adc9]/10 transition"
+                                >
+                                  <Ellipsis className="h-5 w-5 text-gray-600" />
+                                </Button>
+                              </DropdownMenuTrigger>
+
+                              <DropdownMenuContent align="end" className="w-40 rounded-xl border border-slate-100 shadow-xl">
+                                <DropdownMenuItem
+                                  onClick={() => handleEditActe(acte)}
+                                  className="cursor-pointer"
+                                >
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Modifier
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteClick(acte)}
+                                  className="cursor-pointer text-red-600 focus:text-red-600"
+                                >
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      ))
+                  )
+                )}
+              </tbody>
 
 
-          </table>
-        </div>
+            </table>
+          </div>
+        )}
       </div>
 
     </div>

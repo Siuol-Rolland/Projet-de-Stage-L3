@@ -52,6 +52,23 @@ interface Departement {
   Nom_Dep: string;
 }
 
+function PaiementTableSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <tr key={i} className="border-b border-slate-100">
+          {Array.from({ length: 9 }).map((_, j) => (
+            <td key={j} className="px-4 py-3">
+              <div className="h-4 bg-slate-200 rounded w-full"></div>
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
+
 
 export default function AdminPayementPage() {
   const [paiements, setPaiements] = useState<Paiement[]>([]);
@@ -76,20 +93,27 @@ export default function AdminPayementPage() {
 
   const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
 
+  const [loadingPaiements, setLoadingPaiements] = useState(true);
+
+
   // 🔹 Récupérer les paiements depuis le serveur
   useEffect(() => {
     const fetchPaiements = async () => {
       try {
+        setLoadingPaiements(true); // 🔥 début skeleton
         const res = await fetch("/api/admin/payement");
         const data = await res.json();
         setPaiements(data.paiements ?? []);
       } catch (err) {
         console.error("Erreur récupération paiements:", err);
+      } finally {
+        setLoadingPaiements(false); // 🔥 fin skeleton
       }
     };
 
     fetchPaiements();
   }, []);
+
 
   // --- Charger les départements ---
   useEffect(() => {
@@ -161,19 +185,6 @@ export default function AdminPayementPage() {
 
 
   // Validation du paiement
-  // const handleValidation = () => {
-  //   setIsLoading(true);
-  //   setTimeout(() => {
-  //     Swal.fire({
-  //       icon: "success",
-  //       title: "Paiement validé !",
-  //       text: `Le paiement de ${selectedPaiement?.Nom_Etudiant} a été validé.`,
-  //     });
-  //     setIsLoading(false);
-  //     setOpenDialog(false);
-  //   }, 700);
-  // };
-
   const handleValidation = async () => {
   if (!selectedPaiement) return;
 
@@ -235,19 +246,6 @@ export default function AdminPayementPage() {
 
 
   // Annulation du paiement
-  // const handleCancelValidation = () => {
-  //   setIsLoading(true);
-  //   setTimeout(() => {
-  //     Swal.fire({
-  //       icon: "info",
-  //       title: "Annulation confirmée",
-  //       text: `Le paiement du sous-acte de ${selectedPaiement?.Nom_Etudiant} n'a pas été validé.`,
-  //     });
-  //     setIsLoading(false);
-  //     setOpenCancelDialog(false);
-  //   }, 500);
-  // };
-
   const handleCancelValidation = async () => {
     if (!selectedPaiement) return;
 
@@ -307,12 +305,19 @@ export default function AdminPayementPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Validation des paiements</h1>
-      <p className="text-sm text-gray-500 mb-4">{titreFiltre}</p>
+      {/* ======= TITRE ET DESCRIPTION ======= */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-800">Validation des paiements</h1>
+        <p className="mt-1 text-sm text-slate-400 font-medium">{titreFiltre}</p>
+      </div>
       
       {/* --- Bouton filtre --- */}
       <div className="relative inline-block mb-4">
-        <Button variant={"outline"} onClick={() => setFilterOpen(!filterOpen)}>
+        <Button variant={"outline"} 
+          className="rounded-xl border-slate-200 text-slate-600
+             hover:bg-[#44adc9]/5 hover:text-[#44adc9]"
+          onClick={() => setFilterOpen(!filterOpen)}
+        >
           <Filter className="mr-2" />
           Filtrer
         </Button>
@@ -320,7 +325,9 @@ export default function AdminPayementPage() {
         {filterOpen && (
           <div
             ref={filterRef}
-            className="absolute mt-2 w-64 p-4 bg-white border rounded-lg shadow-lg z-20"
+            className="absolute mt-2 w-72 p-4 bg-white rounded-2xl
+           border border-slate-100 shadow-xl z-20"
+
           >
             <div className="grid gap-3">
               {/* Année */}
@@ -398,10 +405,10 @@ export default function AdminPayementPage() {
         )}
       </div>
 
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="min-w-full text-left">
-          <thead className="bg-gray-100 border-b">
-            <tr>
+          <thead className="bg-slate-50 border-b border-slate-100">
+            <tr className="text-sm text-slate-500 font-semibold">
               <th className="px-4 py-3">Étudiant</th>
               <th className="px-4 py-3">Sous-actes</th>
               <th className="px-4 py-3">Note</th>
@@ -415,25 +422,34 @@ export default function AdminPayementPage() {
           </thead>
 
           <tbody>
-            {filteredPaiements.map((p) => (
-              <tr key={p.ID_Realisation} className="border-b hover:bg-gray-50">
-                <td className="px-4 py-3">{p.Nom_Etudiant}</td>
-                <td className="px-4 py-3">{p.sousActe?.Desc_SActes}</td>
-                <td className="px-4 py-3">{p.Note ?? "—"}/20</td>
-                <td className="px-4 py-3">{p.sousActe?.Prix} Ar</td>
-                <td className="px-4 py-3">{p.paiement?.Montant ?? "—"} Ar</td>
-                <td className="px-4 py-3">{p.Montant_Restant} Ar</td>
-                <td className="px-4 py-3">
+            {loadingPaiements ? (
+    <PaiementTableSkeleton />
+  ) : filteredPaiements.length === 0 ? (
+    <tr>
+      <td colSpan={9} className="text-center py-6 text-slate-500 text-sm">
+        Aucun paiement trouvé.
+      </td>
+    </tr>
+  ) : ( 
+            filteredPaiements.map((p) => (
+              <tr key={p.ID_Realisation} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                <td className="px-4 py-3 text-sm text-slate-700">{p.Nom_Etudiant}</td>
+                <td className="px-4 py-3 text-sm text-slate-700">{p.sousActe?.Desc_SActes}</td>
+                <td className="px-4 py-3 text-sm text-slate-700">{p.Note ?? "—"}/20</td>
+                <td className="px-4 py-3 text-sm text-slate-700">{p.sousActe?.Prix} Ar</td>
+                <td className="px-4 py-3 text-sm text-slate-700">{p.paiement?.Montant ?? "—"} Ar</td>
+                <td className="px-4 py-3 text-sm text-slate-700">{p.Montant_Restant} Ar</td>
+                <td className="px-4 py-3 text-sm text-slate-700">
                   {p.paiement ? new Date(p.paiement.Date_Paie).toLocaleDateString() : "—"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 text-sm text-slate-700">
                   <span
                     className={`
-                      px-2 py-1 rounded  text-sm
-                      ${p.paiement?.Statut_Paie === "TOTAL" ? "text-green-500" : ""}
-                      ${p.paiement?.Statut_Paie === "PARTIEL" ? "text-orange-500" : ""}
-                      ${p.paiement?.Statut_Paie === "EN_ATTENTE" ? "text-gray-500" : ""}
-                      ${p.paiement?.Statut_Paie === "ANNULE" ? "text-red-600" : ""}
+                      px-3 py-1 rounded-full text-xs font-bold
+                      ${p.paiement?.Statut_Paie === "TOTAL" ? "bg-emerald-50 text-emerald-600" : ""}
+                      ${p.paiement?.Statut_Paie === "PARTIEL" ? "bg-orange-50 text-orange-600" : ""}
+                      ${p.paiement?.Statut_Paie === "EN_ATTENTE" ? "bg-slate-100 text-slate-500" : ""}
+                      ${p.paiement?.Statut_Paie === "ANNULE" ? "bg-rose-50 text-rose-600" : ""}
                     `}
                   >
                     {p.paiement?.Statut_Paie}
@@ -441,11 +457,11 @@ export default function AdminPayementPage() {
                 </td>
                 <td className="px-4 py-3 text-center">
                   <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <Ellipsis className="cursor-pointer" />
+                    <DropdownMenuTrigger className="p-2 rounded-lg hover:bg-slate-100 transition">
+                      <Ellipsis className="w-5 h-5 text-slate-500 cursor-pointer" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => openValidationDialog(p)}>
+                    <DropdownMenuContent className="rounded-xl border border-slate-100 shadow-lg">
+                      <DropdownMenuItem className="flex gap-2 items-center text-sm" onClick={() => openValidationDialog(p)}>
                          <CircleCheck className="text-green-500"/>
                          Valider
                       </DropdownMenuItem>
@@ -462,16 +478,16 @@ export default function AdminPayementPage() {
                   </DropdownMenu>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>
 
       {/* Modal de validation */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl border border-slate-100 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Validation du paiement d'un sous-acte</DialogTitle>
+            <DialogTitle className="text-lg font-bold tracking-tight text-slate-800" >Validation du paiement d'un sous-acte</DialogTitle>
           </DialogHeader>
 
           {selectedPaiement && (
@@ -504,7 +520,7 @@ export default function AdminPayementPage() {
           )}
 
           <DialogFooter className="mt-4">
-            <Button onClick={handleValidation} disabled={isLoading}>
+            <Button className="rounded-xl bg-[#44adc9] hover:bg-[#3aa0bb]"onClick={handleValidation} disabled={isLoading}>
               {isLoading ? "Validation..." : "Soumettre"}
             </Button>
           </DialogFooter>
@@ -512,9 +528,9 @@ export default function AdminPayementPage() {
       </Dialog>
       {/* Modal d'annulation */}
       <Dialog open={openCancelDialog} onOpenChange={setOpenCancelDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl border border-slate-100 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Confirmer l'annulation</DialogTitle>
+            <DialogTitle >Confirmer l'annulation</DialogTitle>
           </DialogHeader>
           <p className="mt-2 text-gray-700">
             Voulez-vous vraiment <strong>ne pas valider</strong> le paiement du sous-acte{" "}
@@ -524,12 +540,14 @@ export default function AdminPayementPage() {
           <DialogFooter className="mt-4">
             <Button
               variant="outline"
-              className="mr-2"
+              className="rounded-xl bg-[#44adc9] hover:bg-[#3aa0bb]"
               onClick={() => setOpenCancelDialog(false)}
             >
               Fermer
             </Button>
-            <Button onClick={handleCancelValidation} disabled={isLoading}>
+            <Button 
+              className="rounded-xl bg-[#44adc9] hover:bg-[#3aa0bb]"
+              onClick={handleCancelValidation} disabled={isLoading}>
               {isLoading ? "Annulation..." : "Confirmer"}
             </Button>
           </DialogFooter>
@@ -538,16 +556,16 @@ export default function AdminPayementPage() {
 
       {/* Modal historique */}
       <Dialog open={openHistoryDialog} onOpenChange={setOpenHistoryDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl border border-slate-100 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Historique des paiements</DialogTitle>
+            <DialogTitle className="text-lg font-bold tracking-tight text-slate-800">Historique des paiements</DialogTitle>
           </DialogHeader>
 
           <ul className="mt-4 space-y-3">
             {history.map((h) => (
-              <li key={h.ID_Hist} className="p-3 bg-gray-100 rounded">
-                <strong>{h.Action}</strong> — {h.NouveauStatut}<br/>
-                <span className="text-sm">
+              <li key={h.ID_Hist} className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                <strong className="text-slate-700">{h.Action}</strong> — {h.NouveauStatut}<br/>
+                <span className="block text-xs text-slate-400 mt-1">
                   Montant: {h.Montant} Ar — Restant: {h.Montant_Restant} Ar<br/>
                   Le : {new Date(h.Date_Action).toLocaleString()}
                 </span>

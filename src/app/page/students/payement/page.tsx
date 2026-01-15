@@ -152,20 +152,33 @@ export default function EtPayementPage() {
     }
   };
 
+  const statusStyle: Record<string, string> = {
+    TOTAL: "bg-emerald-50 text-emerald-600",
+    PARTIEL: "bg-orange-50 text-orange-600",
+    EN_ATTENTE: "bg-slate-100 text-slate-500",
+  };
+
 
   return (
     <div className="p-6">
       {/* En-tête avec titre et dette totale */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         {isPageLoading ? (
           <TitleSkeleton />
         ) : (
-          <h1 className="text-xl font-semibold">
-            Payement des sous-actes réalisés & Évalués
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+              Payement des sous-actes réalisés & Évalués
+            </h1>
+            <p className="mt-1 text-sm text-slate-400 font-medium">
+              Sous-actes évalués et prêts au paiement
+            </p>
+          </div>
         )}
 
-        <div className="p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm flex items-center gap-2">
+        {/* Carte Dette */}
+        <div className="bg-[#44adc9]/10 border border-[#44adc9]/20
+                  rounded-2xl px-4 py-3 flex items-center gap-3">
           {isPageLoading ? (
             <>
               <LabelSkeleton />
@@ -173,8 +186,8 @@ export default function EtPayementPage() {
             </>
           ) : (
             <>
-              <span className="font-medium">Dette totale :</span>
-              <span className="font-bold text-lg">
+              <span className="text-sm font-medium text-[#44adc9]">Dette totale </span>
+              <span className="text-xl font-bold text-[#44adc9]">
                 {detteTotale.toLocaleString()} Ar
               </span>
             </>
@@ -184,42 +197,53 @@ export default function EtPayementPage() {
 
       
 
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {isPageLoading ? (
             <PaiementTableSkeleton />
           ) : (
             <table className="min-w-full text-left">
-              <thead className="bg-gray-100 border-b">
-                <tr>
-                  <th className="px-4 py-3 font-medium text-gray-700">Sous-actes</th>
-                  <th className="px-4 py-3 font-medium text-gray-700">Note</th>
-                  <th className="px-4 py-3 font-medium text-gray-700">Prix unitaire</th>
-                  <th className="px-4 py-3 font-medium text-gray-700">Montant payé</th>
-                  <th className="px-4 py-3 font-medium text-gray-700">Montant restant</th>
-                  <th className="px-4 py-3 font-medium text-gray-700">Date paiement</th>
-                  <th className="px-4 py-3 font-medium text-gray-700">Statut</th>
-                  <th className="px-4 py-3 font-medium text-gray-700 text-center"></th>
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr  className="text-sm font-semibold text-slate-500">
+                  <th className="px-4 py-3">Sous-actes</th>
+                  <th className="px-4 py-3">Note</th>
+                  <th className="px-4 py-3">Prix unitaire</th>
+                  <th className="px-4 py-3">Montant payé</th>
+                  <th className="px-4 py-3">Montant restant</th>
+                  <th className="px-4 py-3">Date paiement</th>
+                  <th className="px-4 py-3">Statut</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
 
               <tbody>
                 {paiements.map((p) => (
-                  <tr key={p.ID_Realisation} className="border-b hover:bg-gray-50 transition">
-                    <td className="px-4 py-3">{p.sousActe?.Desc_SActes}</td>
-                    <td className="px-4 py-3">{p.Note ?? "—"}/20</td>
-                    <td className="px-4 py-3">{p.sousActe?.Prix} Ar</td>
-                    <td className="px-4 py-3">{p.paiement ? `${p.paiement.Montant} Ar` : "—"}</td>
-                    <td className="px-4 py-3">{p.Montant_Restant} Ar</td>
-                    <td className="px-4 py-3">
+                  <tr key={p.ID_Realisation} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                    <td className="px-4 py-3 text-sm text-slate-700">{p.sousActe?.Desc_SActes}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">{p.Note ?? "—"}/20</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">{p.sousActe?.Prix} Ar</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">{p.paiement ? `${p.paiement.Montant} Ar` : "—"}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">{p.Montant_Restant} Ar</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
                       {p.paiement ? new Date(p.paiement.Date_Paie).toLocaleDateString() : "—"}
                     </td>
-                    <td className="px-4 py-3">{p.paiement?.Statut_Paie || "—"}</td>
+                    <td className="px-4 py-3">
+                      {p.paiement?.Statut_Paie ? (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold
+                          ${statusStyle[p.paiement.Statut_Paie]}`}
+                        >
+                          {p.paiement.Statut_Paie}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <Ellipsis className="cursor-pointer" />
+                        <DropdownMenuTrigger className="p-2 rounded-lg hover:bg-slate-100 transition">
+                          <Ellipsis className="w-5 h-5 text-slate-500 cursor-pointer" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
+                        <DropdownMenuContent className="rounded-xl border border-slate-100 shadow-lg">
                           <DropdownMenuItem onClick={() => openPayerDialog(p)}>Payer</DropdownMenuItem>
                           {/* <DropdownMenuItem className="text-red-500">Supprimer</DropdownMenuItem> */}
                         </DropdownMenuContent>
@@ -235,9 +259,9 @@ export default function EtPayementPage() {
 
       {/* Dialog de paiement */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl border border-slate-100 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Paiement du sous-acte</DialogTitle>
+            <DialogTitle className="text-lg font-bold tracking-tight text-slate-800">Paiement du sous-acte</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
@@ -247,7 +271,7 @@ export default function EtPayementPage() {
                 type="text"
                 value={selectedPaiement?.sousActe?.Desc_SActes || ""}
                 disabled
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                className="mt-1 bg-slate-100 text-slate-500"
               />
             </div>
 
@@ -257,7 +281,7 @@ export default function EtPayementPage() {
                 type="number"
                 value={selectedPaiement?.sousActe?.Prix || 0}
                 disabled
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                className="mt-1 bg-slate-100 text-slate-500"
               />
             </div>
 
@@ -267,23 +291,28 @@ export default function EtPayementPage() {
                 type="number"
                 value={selectedPaiement?.paiement?.Montant || 0}
                 disabled
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-gray-100"
+                className="mt-1 bg-slate-100 text-slate-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium">Montant</label>
               <input
+                
                 type="number"
                 value={montant}
                 onChange={(e) => setMontant(Number(e.target.value))}
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                className="mt-1 w-full rounded-xl border border-slate-200
+                  px-3 py-2 text-sm focus:outline-none
+                  focus:ring-2 focus:ring-[#44adc9]/30"
               />
             </div>
           </div>
 
           <DialogFooter className="mt-4">
-            <Button onClick={handleSubmitPaiement} disabled={isLoading}>
+            <Button 
+              className="rounded-xl bg-[#44adc9] hover:bg-[#3aa0bb]"
+              onClick={handleSubmitPaiement} disabled={isLoading}>
               {isLoading ? "Paiement en cours..." : "Soumettre"}
             </Button>
           </DialogFooter>
